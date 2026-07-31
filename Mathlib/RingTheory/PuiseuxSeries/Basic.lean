@@ -84,8 +84,7 @@ theorem toHahnSeries_comp_expand (n m : ℕ+) :
   RingHom.ext fun f ↦ by
     change HahnSeries.embDomain _ (HahnSeries.embDomain _ f) = HahnSeries.embDomain _ f
     rw [HahnSeries.embDomain_embDomain]
-    congr 1
-    ext k
+    congr 1 with k
     simp [mul_comm ((n : ℚ)), mul_div_mul_left]
 
 /-- The range of `toHahnSeries K n` is contained in the range of `toHahnSeries K (n * m)`,
@@ -123,27 +122,12 @@ lies in `(1 / n) • ℤ` for a single `n`. -/
 theorem mem_subfield_iff_support {x : HahnSeries ℚ K} :
     x ∈ subfield K ↔
       ∃ n : ℕ+, ∀ q ∈ x.support, ∃ k : ℤ, q = (k : ℚ) / (n : ℚ) := by
-  -- the key coefficient fact about `toHahnSeries K n`, which is an `embDomain` by definition
-  have key : ∀ (n : ℕ+) (f : LaurentSeries K) (q : ℚ),
-      (¬ ∃ k : ℤ, q = (k : ℚ) / (n : ℚ)) → ((toHahnSeries K n) f).coeff q = 0 := fun n f q hq ↦
-    HahnSeries.embDomain_of_notMem_range fun ⟨k, hk⟩ ↦ hq ⟨k, hk.symm⟩
   rw [mem_subfield_iff]
-  constructor
-  · rintro ⟨n, f, rfl⟩
-    exact ⟨n, fun q ↦ Not.imp_symm (key n f q)⟩
-  · rintro ⟨n, hn⟩
-    refine ⟨n, ?_⟩
-    rcases Set.eq_empty_or_nonempty x.support with hs | hs
-    · exact ⟨0, (map_zero _).trans (HahnSeries.support_eq_empty_iff.mp hs).symm⟩
-    -- the minimum of the support gives an integer lower bound for the support of `f`
-    refine ⟨⟨fun k ↦ x.coeff ((k : ℚ) / (n : ℚ)), ?_⟩, ?_⟩
-    · exact (BddBelow.isWF ⟨⌈(n : ℚ) * x.isWF_support.min hs⌉, fun k hk ↦ Int.ceil_le.mpr
-        ((le_div_iff₀' (by exact_mod_cast n.pos)).mp (x.isWF_support.min_le hs hk))⟩).isPWO
-    · ext q
-      by_cases hq : ∃ k : ℤ, q = (k : ℚ) / (n : ℚ)
-      · obtain ⟨k, rfl⟩ := hq
-        exact HahnSeries.embDomain_coeff
-      · exact (key n _ q hq).trans (of_not_not (mt (hn q) hq)).symm
+  refine exists_congr fun n ↦ ?_
+  -- membership in the range of `toHahnSeries K n`, an `embDomain` by definition
+  rw [show x ∈ (toHahnSeries K n).fieldRange ↔ _ from HahnSeries.mem_range_embDomain_iff]
+  exact ⟨fun h q hq ↦ (h hq).imp fun _ hk ↦ hk.symm,
+    fun h q hq ↦ (h q hq).imp fun _ hk ↦ hk.symm⟩
 
 /-- A finite set of elements of the Puiseux subfield lies in the range of a single
 `toHahnSeries K N`. -/

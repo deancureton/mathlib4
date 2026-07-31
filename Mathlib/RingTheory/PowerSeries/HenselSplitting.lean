@@ -46,34 +46,25 @@ theorem Monic.exists_factorization_rootMultiplicity_zero {p : (PowerSeries K)[X]
       g.natDegree = k ∧ h.natDegree = m - k ∧
       g.map (PowerSeries.constantCoeff (R := K)) = X ^ k := by
   have hkm : k ≤ m := by
-    have h := natDegree_le_of_dvd
-      (pow_rootMultiplicity_dvd (p.map (PowerSeries.constantCoeff (R := K))) 0)
-      (hp.map (PowerSeries.constantCoeff (R := K))).ne_zero
-    rwa [(monic_X_sub_C (0 : K)).natDegree_pow, natDegree_X_sub_C, mul_one, hk,
-      hp.natDegree_map, hm] at h
+    rw [← hk, Polynomial.rootMultiplicity_eq_natTrailingDegree', ← hm,
+      ← hp.natDegree_map (PowerSeries.constantCoeff (R := K))]
+    exact Polynomial.natTrailingDegree_le_natDegree _
   have : IsAdicComplete (IsLocalRing.maximalIdeal (PowerSeries K)) (PowerSeries K) := by
     rw [PowerSeries.maximalIdeal_eq_span_X]; infer_instance
   set A := PowerSeries K
   set e := PowerSeries.residueFieldOfPowerSeries (k := K)
   set φ := (p : PowerSeries A).map (IsLocalRing.residue A) with hφ
-  -- The residue field of `A` is `K`, so `φ` corresponds to the reduction of `p`.
-  have key : φ.map e.toRingHom =
-      ((p.map (PowerSeries.constantCoeff (R := K)) : K[X]) : PowerSeries K) := by
-    ext n
-    simp only [hφ, PowerSeries.coeff_map, Polynomial.coeff_coe, Polynomial.coeff_map]
-    rfl
-  -- The order of the coercion of a nonzero polynomial is its root multiplicity at `0`.
-  have hordK : ((p.map (PowerSeries.constantCoeff (R := K)) : K[X]) : PowerSeries K).order =
-      (k : ℕ∞) := by
+  -- The residue field of `A` is `K`, so the coefficients of `φ` are those of the reduction of `p`.
+  have key (n : ℕ) : e (PowerSeries.coeff n φ) =
+      (p.map (PowerSeries.constantCoeff (R := K))).coeff n := by
+    simp only [hφ, PowerSeries.coeff_map, Polynomial.coeff_coe, Polynomial.coeff_map]; rfl
+  -- Hence the order of `φ` is the root multiplicity at `0` of the reduction, namely `k`.
+  have horder : φ.order = (k : ℕ∞) := by
     have hnz : (p.map (PowerSeries.constantCoeff (R := K))) ≠ 0 := (hp.map _).ne_zero
     rw [← hk, Polynomial.rootMultiplicity_eq_natTrailingDegree', PowerSeries.order_eq_nat]
-    refine ⟨?_, fun i hi ↦ by simpa using Polynomial.coeff_eq_zero_of_lt_natTrailingDegree hi⟩
-    simpa [Polynomial.trailingCoeff] using Polynomial.trailingCoeff_nonzero_iff_nonzero.mpr hnz
-  have hmap : (φ.map e.toRingHom).order = φ.order := by
-    have h : (φ.map e.toRingHom).map e.symm.toRingHom = φ := by ext n; simp
-    refine le_antisymm ?_ (PowerSeries.le_order_map _)
-    simpa only [h] using PowerSeries.le_order_map (φ := φ.map e.toRingHom) e.symm.toRingHom
-  have horder : φ.order = (k : ℕ∞) := by rw [← hmap, key, hordK]
+    refine ⟨fun h ↦ Polynomial.trailingCoeff_nonzero_iff_nonzero.mpr hnz ?_,
+      fun i hi ↦ e.injective (by simp [key, Polynomial.coeff_eq_zero_of_lt_natTrailingDegree hi])⟩
+    rw [Polynomial.trailingCoeff, ← key, h, map_zero]
   have hφnz : φ ≠ 0 := fun h ↦ by simp [h] at horder
   -- Weierstrass preparation for `A⟦X⟧`.
   obtain ⟨f, u, H⟩ := PowerSeries.exists_isWeierstrassFactorization hφnz
@@ -112,21 +103,17 @@ theorem Monic.exists_factorization_rootMultiplicity {p : (PowerSeries K)[X]} {m 
       g.natDegree = k ∧ h.natDegree = m - k := by
   set c : PowerSeries K := PowerSeries.C a with hc
   -- Shift the root to `0`.
-  have hPmonic : (p.comp (X + C c)).Monic := hp.comp_X_add_C c
-  have hPdeg : (p.comp (X + C c)).natDegree = m := by simp [Polynomial.natDegree_comp, hm]
-  have hred : (p.comp (X + C c)).map (PowerSeries.constantCoeff (R := K)) =
-      (p.map (PowerSeries.constantCoeff (R := K))).comp (X + C a) := by
-    simp [Polynomial.map_comp, hc]
   have hkP : ((p.comp (X + C c)).map
       (PowerSeries.constantCoeff (R := K))).rootMultiplicity 0 = k := by
-    rw [hred, ← Polynomial.rootMultiplicity_eq_rootMultiplicity, hk]
+    rw [show (p.comp (X + C c)).map (PowerSeries.constantCoeff (R := K)) =
+        (p.map (PowerSeries.constantCoeff (R := K))).comp (X + C a) by
+      simp [Polynomial.map_comp, hc], ← Polynomial.rootMultiplicity_eq_rootMultiplicity, hk]
   obtain ⟨g₀, h₀, hg₀, hh₀, hpr, hg₀deg, hh₀deg, -⟩ :=
-    hPmonic.exists_factorization_rootMultiplicity_zero hPdeg hkP
+    (hp.comp_X_add_C c).exists_factorization_rootMultiplicity_zero (m := m)
+      (by simp [Polynomial.natDegree_comp, hm]) hkP
   -- Shift back.
-  have hdegsub : ∀ q : (PowerSeries K)[X], (q.comp (X - C c)).natDegree = q.natDegree := by
-    simp [Polynomial.natDegree_comp]
   refine ⟨g₀.comp (X - C c), h₀.comp (X - C c), hg₀.comp_X_sub_C c, hh₀.comp_X_sub_C c, ?_,
-    by rw [hdegsub, hg₀deg], by rw [hdegsub, hh₀deg]⟩
+    by simp [Polynomial.natDegree_comp, hg₀deg], by simp [Polynomial.natDegree_comp, hh₀deg]⟩
   simp [← Polynomial.mul_comp, ← hpr, Polynomial.comp_assoc]
 
 end Polynomial

@@ -507,6 +507,24 @@ theorem embDomain_embDomain {Γ'' : Type*} [PartialOrder Γ''] (f : Γ ↪o Γ')
       rw [embDomain_coeff, embDomain_of_notMem_range fun ⟨a, ha⟩ => hb ⟨a, by simp [ha]⟩]
     · exact embDomain_of_notMem_range hb'
 
+/-- A Hahn series on `Γ'` is extended from `Γ` along `f` if and only if its support is contained
+in the range of `f`. -/
+theorem mem_range_embDomain_iff {f : Γ ↪o Γ'} {x : R⟦Γ'⟧} :
+    x ∈ Set.range (embDomain f : R⟦Γ⟧ → R⟦Γ'⟧) ↔ x.support ⊆ Set.range f := by
+  constructor
+  · rintro ⟨y, rfl⟩
+    exact support_embDomain_subset.trans (Set.image_subset_range _ _)
+  · intro hx
+    refine ⟨⟨fun a ↦ x.coeff (f a),
+      Set.partiallyWellOrderedOn_iff_exists_lt.mpr fun g hg ↦ ?_⟩, ?_⟩
+    · obtain ⟨a, b, hab, h⟩ := x.isPWO_support.exists_lt (f := fun k ↦ f (g k)) hg
+      exact ⟨a, b, hab, f.le_iff_le.mp h⟩
+    · ext b
+      by_cases hb : b ∈ Set.range f
+      · obtain ⟨a, rfl⟩ := hb
+        exact embDomain_coeff
+      · exact (embDomain_of_notMem_range hb).trans (of_not_not fun con ↦ hb (hx con)).symm
+
 theorem embDomain_injective {f : Γ ↪o Γ'} :
     Function.Injective (embDomain f : R⟦Γ⟧ → R⟦Γ'⟧) := fun x y xy => by
   ext g
