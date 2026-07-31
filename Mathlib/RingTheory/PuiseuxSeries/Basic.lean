@@ -127,13 +127,13 @@ theorem mem_subfield_iff_support {x : HahnSeries ℚ K} :
     x ∈ subfield K ↔
       ∃ n : ℕ+, ∀ q ∈ x.support, ∃ k : ℤ, q = (k : ℚ) / (n : ℚ) := by
   -- the key coefficient fact about `toHahn K n`, which is an `embDomain` by definition
-  have key₂ : ∀ (n : ℕ+) (f : LaurentSeries K) (q : ℚ),
+  have key : ∀ (n : ℕ+) (f : LaurentSeries K) (q : ℚ),
       (¬ ∃ k : ℤ, q = (k : ℚ) / (n : ℚ)) → ((toHahn K n) f).coeff q = 0 := fun n f q hq =>
     HahnSeries.embDomain_of_notMem_range fun ⟨k, hk⟩ => hq ⟨k, hk.symm⟩
   rw [mem_subfield_iff]
   constructor
   · rintro ⟨n, f, rfl⟩
-    exact ⟨n, fun q => Not.imp_symm (key₂ n f q)⟩
+    exact ⟨n, fun q => Not.imp_symm (key n f q)⟩
   · rintro ⟨n, hn⟩
     refine ⟨n, ?_⟩
     rcases Set.eq_empty_or_nonempty x.support with hs | hs
@@ -146,7 +146,7 @@ theorem mem_subfield_iff_support {x : HahnSeries ℚ K} :
       by_cases hq : ∃ k : ℤ, q = (k : ℚ) / (n : ℚ)
       · obtain ⟨k, rfl⟩ := hq
         exact HahnSeries.embDomain_coeff
-      · exact (key₂ n _ q hq).trans (of_not_not (mt (hn q) hq)).symm
+      · exact (key n _ q hq).trans (of_not_not (mt (hn q) hq)).symm
 
 /-- Common index: a finite set of elements of the Puiseux subfield lies in the
 range of a single `toHahn K N`. -/

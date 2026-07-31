@@ -20,11 +20,11 @@ maximal ideal of `K⟦X⟧` (that is, of the coefficientwise application of
 ## Main results
 
 - `Polynomial.Monic.exists_factorization_rootMultiplicity_zero`: a monic `p` over `K⟦X⟧` of
-  degree `m` whose reduction has `0` as a root of multiplicity `k ≤ m` factors as
+  degree `m` whose reduction has `0` as a root of multiplicity `k` factors as
   `p = g * h` with `g`, `h` monic of degrees `k` and `m - k`, and the reduction of `g` is `X ^ k`.
 
 - `Polynomial.Monic.exists_factorization_rootMultiplicity`: a monic `p` over `K⟦X⟧` of degree
-  `m` whose reduction has a root `a : K` of multiplicity `k ≤ m` factors as
+  `m` whose reduction has a root `a : K` of multiplicity `k` factors as
   `p = g * h` with `g`, `h` monic of degrees `k` and `m - k`.
 
 -/
@@ -36,16 +36,21 @@ namespace Polynomial
 variable {K : Type*} [Field K]
 
 /-- **Hensel splitting at zero**: a monic `p` over `K⟦X⟧` of degree `m` whose reduction
-(coefficientwise `PowerSeries.constantCoeff`) has `0` as a root of multiplicity `k ≤ m`
+(coefficientwise `PowerSeries.constantCoeff`) has `0` as a root of multiplicity `k`
 factors as `p = g * h` with `g`, `h` monic of degrees `k` and `m - k`, and `g`
 distinguished: its reduction is `X ^ k`. -/
 theorem Monic.exists_factorization_rootMultiplicity_zero {p : (PowerSeries K)[X]} {m k : ℕ}
     (hp : p.Monic) (hm : p.natDegree = m)
-    (hk : (p.map (PowerSeries.constantCoeff (R := K))).rootMultiplicity 0 = k)
-    (hkm : k ≤ m) :
+    (hk : (p.map (PowerSeries.constantCoeff (R := K))).rootMultiplicity 0 = k) :
     ∃ g h : (PowerSeries K)[X], g.Monic ∧ h.Monic ∧ p = g * h ∧
       g.natDegree = k ∧ h.natDegree = m - k ∧
       g.map (PowerSeries.constantCoeff (R := K)) = X ^ k := by
+  have hkm : k ≤ m := by
+    have h := natDegree_le_of_dvd
+      (pow_rootMultiplicity_dvd (p.map (PowerSeries.constantCoeff (R := K))) 0)
+      (hp.map (PowerSeries.constantCoeff (R := K))).ne_zero
+    rwa [(monic_X_sub_C (0 : K)).natDegree_pow, natDegree_X_sub_C, mul_one, hk,
+      hp.natDegree_map, hm] at h
   have : IsAdicComplete (IsLocalRing.maximalIdeal (PowerSeries K)) (PowerSeries K) := by
     rw [PowerSeries.maximalIdeal_eq_span_X]; infer_instance
   set A := PowerSeries K
@@ -98,12 +103,11 @@ theorem Monic.exists_factorization_rootMultiplicity_zero {p : (PowerSeries K)[X]
     rwa [Polynomial.map_map, Polynomial.map_pow, Polynomial.map_X] at h1
 
 /-- **Hensel splitting at a root**: a monic `p` over `K⟦X⟧` of degree `m` whose reduction
-(coefficientwise `PowerSeries.constantCoeff`) has a root `a : K` of multiplicity `k ≤ m`
+(coefficientwise `PowerSeries.constantCoeff`) has a root `a : K` of multiplicity `k`
 factors as `p = g * h` with `g`, `h` monic of degrees `k` and `m - k`. -/
 theorem Monic.exists_factorization_rootMultiplicity {p : (PowerSeries K)[X]} {m k : ℕ} {a : K}
     (hp : p.Monic) (hm : p.natDegree = m)
-    (hk : (p.map (PowerSeries.constantCoeff (R := K))).rootMultiplicity a = k)
-    (hkm : k ≤ m) :
+    (hk : (p.map (PowerSeries.constantCoeff (R := K))).rootMultiplicity a = k) :
     ∃ g h : (PowerSeries K)[X], g.Monic ∧ h.Monic ∧ p = g * h ∧
       g.natDegree = k ∧ h.natDegree = m - k := by
   set c : PowerSeries K := PowerSeries.C a with hc
@@ -117,7 +121,7 @@ theorem Monic.exists_factorization_rootMultiplicity {p : (PowerSeries K)[X]} {m 
       (PowerSeries.constantCoeff (R := K))).rootMultiplicity 0 = k := by
     rw [hred, ← Polynomial.rootMultiplicity_eq_rootMultiplicity, hk]
   obtain ⟨g₀, h₀, hg₀, hh₀, hpr, hg₀deg, hh₀deg, -⟩ :=
-    hPmonic.exists_factorization_rootMultiplicity_zero hPdeg hkP hkm
+    hPmonic.exists_factorization_rootMultiplicity_zero hPdeg hkP
   -- Shift back.
   have hdegsub : ∀ q : (PowerSeries K)[X], (q.comp (X - C c)).natDegree = q.natDegree := by
     simp [Polynomial.natDegree_comp]

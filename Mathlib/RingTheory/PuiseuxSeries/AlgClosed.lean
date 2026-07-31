@@ -26,11 +26,11 @@ degree. Given a monic polynomial `p` of degree `m` over `K((t))`:
 * if all lower coefficients vanish the polynomial is `X ^ m`, with root `0`;
 * otherwise, rescaling the variable by a monomial `t ^ (a / (nq))` chosen by the minimal Newton
   slope produces a monic polynomial `P` over `K⟦t⟧` whose reduction mod `t` is not a pure power
-  (`LaurentSeries.newton_slope_scaling`);
+  (an internal rescaling lemma);
 * the reduction of `P` has a root of multiplicity strictly between `0` and `m`, so the Hensel
   splitting `Polynomial.Monic.exists_factorization_rootMultiplicity` produces a proper monic
-  factor, and the induction hypothesis applies to it at a finer index
-  (`LaurentSeries.newton_puiseux_descent`).
+  factor, and the induction hypothesis applies to it at a finer index (an internal descent
+  lemma).
 
 ## Main results
 
@@ -265,7 +265,7 @@ private theorem newton_puiseux_descent [IsAlgClosed K] [CharZero K] (n : ℕ+)
   obtain ⟨a₀, hk0, hkm⟩ := hRmonic.exists_rootMultiplicity_pos_lt hRdeg
     (Nat.cast_ne_zero.mpr (hex.elim fun _ ⟨hi, _⟩ => (Nat.zero_lt_of_lt hi).ne')) hRsub hRne
   obtain ⟨G, h, hG, hh, hPeq, hGdeg, -⟩ :=
-    hPm.exists_factorization_rootMultiplicity (a := a₀) hPdeg rfl hkm.le
+    hPm.exists_factorization_rootMultiplicity (a := a₀) hPdeg rfl
   refine ⟨q, HahnSeries.single ((a : ℚ) / ((n * q : ℕ+) : ℚ)) 1,
     G.map (HahnSeries.ofPowerSeries ℤ K), ⟨HahnSeries.single a 1, by rw [toHahn_single]⟩,
     hG.map _, ?_, ?_, ?_⟩
