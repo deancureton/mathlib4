@@ -492,8 +492,6 @@ theorem embDomain_single {f : Γ ↪o Γ'} {g : Γ} {r : R} :
   · simp [hr]
   rwa [support_single_of_ne hr, Set.image_singleton, Set.mem_singleton_iff]
 
-/-- `embDomain` composes: extending along `f` and then along `g` is extending along
-`f.trans g`. -/
 @[simp]
 theorem embDomain_embDomain {Γ'' : Type*} [PartialOrder Γ''] (f : Γ ↪o Γ') (g : Γ' ↪o Γ'')
     (x : R⟦Γ⟧) : embDomain g (embDomain f x) = embDomain (f.trans g) x := by
@@ -507,8 +505,6 @@ theorem embDomain_embDomain {Γ'' : Type*} [PartialOrder Γ''] (f : Γ ↪o Γ')
       rw [embDomain_coeff, embDomain_of_notMem_range fun ⟨a, ha⟩ => hb ⟨a, by simp [ha]⟩]
     · exact embDomain_of_notMem_range hb'
 
-/-- A Hahn series on `Γ'` is extended from `Γ` along `f` if and only if its support is contained
-in the range of `f`. -/
 theorem mem_range_embDomain_iff {f : Γ ↪o Γ'} {x : R⟦Γ'⟧} :
     x ∈ Set.range (embDomain f : R⟦Γ⟧ → R⟦Γ'⟧) ↔ x.support ⊆ Set.range f := by
   constructor

@@ -57,7 +57,6 @@ def expand (m : ℕ+) : LaurentSeries K →+* LaurentSeries K :=
     (fun _ _ ↦ mul_left_cancel₀ (by exact_mod_cast m.ne_zero))
     fun _ _ ↦ mul_le_mul_iff_right₀ (by exact_mod_cast m.pos)
 
-/-- `LaurentSeries.expand K q` multiplies the `orderTop` of a Laurent series by `q`. -/
 theorem orderTop_expand (q : ℕ+) (c : LaurentSeries K) :
     (expand K q c).orderTop = c.orderTop.map fun k : ℤ ↦ (q : ℤ) * k := by
   rw [show expand K q c = HahnSeries.embDomain _ c from HahnSeries.embDomainRingHom_apply _ _ _ c,
@@ -77,8 +76,6 @@ theorem toHahnSeries_single (n : ℕ+) (k : ℤ) (a : K) :
     toHahnSeries K n (HahnSeries.single k a) = HahnSeries.single ((k : ℚ) / (n : ℚ)) a :=
   HahnSeries.embDomain_single ..
 
-/-- Expanding by `m` and then applying `toHahnSeries K (n * m)` agrees with
-`toHahnSeries K n`. -/
 theorem toHahnSeries_comp_expand (n m : ℕ+) :
     (toHahnSeries K (n * m)).comp (expand K m) = toHahnSeries K n :=
   RingHom.ext fun f ↦ by
@@ -87,13 +84,10 @@ theorem toHahnSeries_comp_expand (n m : ℕ+) :
     congr 1 with k
     simp [mul_comm ((n : ℚ)), mul_div_mul_left]
 
-/-- The range of `toHahnSeries K n` is contained in the range of `toHahnSeries K (n * m)`,
-as subfields of `HahnSeries ℚ K`. -/
 theorem fieldRange_toHahnSeries_le (n m : ℕ+) :
     (toHahnSeries K n).fieldRange ≤ (toHahnSeries K (n * m)).fieldRange :=
   fun _ ⟨f, hf⟩ ↦ ⟨expand K m f, (DFunLike.congr_fun (toHahnSeries_comp_expand K n m) f).trans hf⟩
 
-/-- The family of subfields `n ↦ (toHahnSeries K n).fieldRange` is directed. -/
 theorem directed_fieldRange_toHahnSeries :
     Directed (· ≤ ·) fun n : ℕ+ ↦ (toHahnSeries K n).fieldRange := fun a b ↦
   ⟨a * b, fieldRange_toHahnSeries_le K a b, mul_comm b a ▸ fieldRange_toHahnSeries_le K b a⟩
@@ -111,8 +105,6 @@ union of the images `K((t ^ (1 / n)))` of the embeddings `toHahnSeries K n`. -/
 def subfield : Subfield (HahnSeries ℚ K) :=
   ⨆ n : ℕ+, (toHahnSeries K n).fieldRange
 
-/-- A Hahn series lies in the Puiseux subfield if and only if it lies in the range of some
-`toHahnSeries K n`. -/
 theorem mem_subfield_iff {x : HahnSeries ℚ K} :
     x ∈ subfield K ↔ ∃ n : ℕ+, x ∈ (toHahnSeries K n).fieldRange :=
   Subfield.mem_iSup_of_directed (directed_fieldRange_toHahnSeries K)
@@ -129,8 +121,6 @@ theorem mem_subfield_iff_support {x : HahnSeries ℚ K} :
   exact ⟨fun h q hq ↦ (h hq).imp fun _ hk ↦ hk.symm,
     fun h q hq ↦ (h q hq).imp fun _ hk ↦ hk.symm⟩
 
-/-- A finite set of elements of the Puiseux subfield lies in the range of a single
-`toHahnSeries K N`. -/
 theorem exists_common_index (s : Finset (HahnSeries ℚ K))
     (hs : ∀ x ∈ s, x ∈ subfield K) :
     ∃ N : ℕ+, ∀ x ∈ s, x ∈ (toHahnSeries K N).fieldRange := by
