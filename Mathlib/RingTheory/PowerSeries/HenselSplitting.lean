@@ -54,11 +54,9 @@ theorem Monic.exists_factorization_rootMultiplicity_zero {p : (PowerSeries K)[X]
   set A := PowerSeries K
   set e := PowerSeries.residueFieldOfPowerSeries (k := K)
   set φ := (p : PowerSeries A).map (IsLocalRing.residue A) with hφ
-  -- The residue field of `A` is `K`, so the coefficients of `φ` are those of the reduction of `p`.
   have key (n : ℕ) : e (PowerSeries.coeff n φ) =
       (p.map (PowerSeries.constantCoeff (R := K))).coeff n := by
     simp only [hφ, PowerSeries.coeff_map, Polynomial.coeff_coe, Polynomial.coeff_map]; rfl
-  -- Hence the order of `φ` is the root multiplicity at `0` of the reduction, namely `k`.
   have horder : φ.order = (k : ℕ∞) := by
     have hnz : (p.map (PowerSeries.constantCoeff (R := K))) ≠ 0 := (hp.map _).ne_zero
     rw [← hk, Polynomial.rootMultiplicity_eq_natTrailingDegree', PowerSeries.order_eq_nat]
@@ -66,7 +64,6 @@ theorem Monic.exists_factorization_rootMultiplicity_zero {p : (PowerSeries K)[X]
       fun i hi ↦ e.injective (by simp [key, Polynomial.coeff_eq_zero_of_lt_natTrailingDegree hi])⟩
     rw [Polynomial.trailingCoeff, ← key, h, map_zero]
   have hφnz : φ ≠ 0 := fun h ↦ by simp [h] at horder
-  -- Weierstrass preparation for `A⟦X⟧`.
   obtain ⟨f, u, H⟩ := PowerSeries.exists_isWeierstrassFactorization hφnz
   have hfmonic : f.Monic := H.isDistinguishedAt.monic
   have hfdeg : f.natDegree = k := by
@@ -75,7 +72,6 @@ theorem Monic.exists_factorization_rootMultiplicity_zero {p : (PowerSeries K)[X]
       (Ideal.Quotient.mk (IsLocalRing.maximalIdeal A))).order = (k : ℕ∞) := by
     rw [← H.isDistinguishedAt.coe_natDegree_eq_order_map (f : PowerSeries A) 1 (by simp)
       (by simp), hfdeg]
-  -- Divide `p` by the monic `f` in `A[X]`; uniqueness of Weierstrass division forces `u = p /ₘ f`.
   have hdivmod : p = f * (p /ₘ f) + p %ₘ f :=
     ((add_comm _ _).trans (p.modByMonic_add_div f)).symm
   have hrdeg : (p %ₘ f).degree < (k : ℕ) :=
@@ -88,8 +84,7 @@ theorem Monic.exists_factorization_rootMultiplicity_zero {p : (PowerSeries K)[X]
   refine ⟨f, p /ₘ f, hfmonic, hfmonic.of_mul_monic_left (hdivmod ▸ hp), hdivmod, hfdeg, ?_, ?_⟩
   · have := p.natDegree_divByMonic hfmonic
     omega
-  · -- `f` is distinguished of degree `k`, so its reduction is `X ^ k`.
-    have h1 := congrArg (Polynomial.map e.toRingHom)
+  · have h1 := congrArg (Polynomial.map e.toRingHom)
       (show f.map (IsLocalRing.residue A) = X ^ k from hfdeg ▸ H.isDistinguishedAt.map_eq_X_pow)
     rwa [Polynomial.map_map, Polynomial.map_pow, Polynomial.map_X] at h1
 
@@ -102,7 +97,6 @@ theorem Monic.exists_factorization_rootMultiplicity {p : (PowerSeries K)[X]} {m 
     ∃ g h : (PowerSeries K)[X], g.Monic ∧ h.Monic ∧ p = g * h ∧
       g.natDegree = k ∧ h.natDegree = m - k := by
   set c : PowerSeries K := PowerSeries.C a with hc
-  -- Shift the root to `0`.
   have hkP : ((p.comp (X + C c)).map
       (PowerSeries.constantCoeff (R := K))).rootMultiplicity 0 = k := by
     rw [show (p.comp (X + C c)).map (PowerSeries.constantCoeff (R := K)) =
@@ -111,7 +105,6 @@ theorem Monic.exists_factorization_rootMultiplicity {p : (PowerSeries K)[X]} {m 
   obtain ⟨g₀, h₀, hg₀, hh₀, hpr, hg₀deg, hh₀deg, -⟩ :=
     (hp.comp_X_add_C c).exists_factorization_rootMultiplicity_zero (m := m)
       (by simp [Polynomial.natDegree_comp, hm]) hkP
-  -- Shift back.
   refine ⟨g₀.comp (X - C c), h₀.comp (X - C c), hg₀.comp_X_sub_C c, hh₀.comp_X_sub_C c, ?_,
     by simp [Polynomial.natDegree_comp, hg₀deg], by simp [Polynomial.natDegree_comp, hh₀deg]⟩
   simp [← Polynomial.mul_comp, ← hpr, Polynomial.comp_assoc]

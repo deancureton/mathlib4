@@ -18,7 +18,6 @@ field `HahnSeries ℚ K`, namely the directed union of the images of the embeddi
 
 ## Main definitions
 
-* `LaurentSeries.expand K m`: the expansion ring endomorphism of `K((t))` sending `t` to `t ^ m`.
 * `LaurentSeries.toHahnSeries K n`: the ring embedding `K((t)) →+* HahnSeries ℚ K`
   sending `t` to `t ^ (1 / n)`.
 * `PuiseuxSeries.subfield K`: the Puiseux subfield `⨆ n, (toHahnSeries K n).fieldRange` of
@@ -49,19 +48,6 @@ noncomputable section
 namespace LaurentSeries
 
 variable (K : Type*) [Field K]
-
-/-- The expansion ring endomorphism of `K((t))` sending `t` to `t ^ m`, obtained by
-embedding the exponents along `k ↦ m * k`. -/
-def expand (m : ℕ+) : LaurentSeries K →+* LaurentSeries K :=
-  HahnSeries.embDomainRingHom (AddMonoidHom.mk' ((m : ℤ) * ·) (mul_add _))
-    (fun _ _ ↦ mul_left_cancel₀ (by exact_mod_cast m.ne_zero))
-    fun _ _ ↦ mul_le_mul_iff_right₀ (by exact_mod_cast m.pos)
-
-theorem orderTop_expand (q : ℕ+) (c : LaurentSeries K) :
-    (expand K q c).orderTop = c.orderTop.map fun k : ℤ ↦ (q : ℤ) * k := by
-  rw [show expand K q c = HahnSeries.embDomain _ c from HahnSeries.embDomainRingHom_apply _ _ _ c,
-    HahnSeries.orderTop_embDomain]
-  rfl
 
 /-- The ring embedding `K((t)) →+* HahnSeries ℚ K` sending `t` to `t ^ (1 / n)`, obtained by
 embedding the exponents along `k ↦ k / n : ℤ → ℚ`. -/
@@ -116,7 +102,6 @@ theorem mem_subfield_iff_support {x : HahnSeries ℚ K} :
       ∃ n : ℕ+, ∀ q ∈ x.support, ∃ k : ℤ, q = (k : ℚ) / (n : ℚ) := by
   rw [mem_subfield_iff]
   refine exists_congr fun n ↦ ?_
-  -- membership in the range of `toHahnSeries K n`, an `embDomain` by definition
   rw [show x ∈ (toHahnSeries K n).fieldRange ↔ _ from HahnSeries.mem_range_embDomain_iff]
   exact ⟨fun h q hq ↦ (h hq).imp fun _ hk ↦ hk.symm,
     fun h q hq ↦ (h q hq).imp fun _ hk ↦ hk.symm⟩

@@ -61,40 +61,8 @@ theorem mem_adjoin_single_of_mem_fieldRange (n : ℕ+) {x : HahnSeries ℚ K}
     (hx : x ∈ (LaurentSeries.toHahnSeries K n).fieldRange) :
     x ∈ Algebra.adjoin (LaurentSeries.toHahnSeries K 1).fieldRange
       {HahnSeries.single ((1 : ℚ) / (n : ℚ)) (1 : K)} := by
-  classical
   obtain ⟨f, rfl⟩ := hx
-  obtain ⟨b, hb⟩ : BddBelow f.support := f.support.eq_empty_or_nonempty.elim (· ▸ bddBelow_empty)
-    fun h ↦ ⟨_, fun _ hy ↦ f.isWF_support.min_le h hy⟩
-  have hg : ∀ r : ℤ, ∃ y : LaurentSeries K, ∀ k : ℤ, y.coeff k = f.coeff ((n : ℤ) * k + r) := by
-    intro r
-    refine ⟨⟨fun k ↦ f.coeff ((n : ℤ) * k + r),
-        (BddBelow.isWF ⟨min 0 (b - r), fun k hk ↦ ?_⟩).isPWO⟩, fun _ ↦ rfl⟩
-    exact min_le_iff.mpr <| (le_or_gt 0 k).imp id fun h0 ↦ by nlinarith [hb hk, n.pos]
-  choose g hgc using hg
-  have hexp1 (y : LaurentSeries K) (k : ℤ) : (expand K n y).coeff ((n : ℤ) * k) = y.coeff k :=
-    HahnSeries.embDomain_coeff
-  have hexp0 (y : LaurentSeries K) {j : ℤ} (hj : ¬∃ k : ℤ, (n : ℤ) * k = j) :
-      (expand K n y).coeff j = 0 := HahnSeries.embDomain_of_notMem_range hj
-  have hf : f = ∑ r ∈ Finset.range (n : ℕ),
-      HahnSeries.single (r : ℤ) (1 : K) * expand K n (g r) := by
-    ext j
-    rw [HahnSeries.coeff_sum]
-    have hn0 : (0 : ℤ) < (n : ℤ) := by exact_mod_cast n.pos
-    set r₀ : ℕ := (j % (n : ℤ)).toNat
-    have hnonneg := Int.emod_nonneg j (ne_of_gt hn0)
-    have hr₀lt : r₀ < (n : ℕ) := (Int.toNat_lt hnonneg).mpr (Int.emod_lt_of_pos j hn0)
-    have hr₀cast : (r₀ : ℤ) = j % (n : ℤ) := Int.toNat_of_nonneg hnonneg
-    rw [Finset.sum_eq_single_of_mem r₀ (Finset.mem_range.mpr hr₀lt) ?_]
-    · rw [HahnSeries.coeff_single_mul, one_mul, hr₀cast, ← Int.mul_ediv_self j (n : ℤ), hexp1, hgc]
-      exact congrArg _ (by have := Int.mul_ediv_self j (n : ℤ); omega)
-    · intro r hr hne
-      have hnd : ¬∃ k : ℤ, (n : ℤ) * k = j - (r : ℤ) := by
-        rintro ⟨k, hk⟩
-        have hrlt : (r : ℤ) < (n : ℤ) := by exact_mod_cast Finset.mem_range.mp hr
-        refine hne (Nat.cast_injective (R := ℤ) ?_)
-        rw [hr₀cast, show j = (n : ℤ) * k + r by omega, Int.mul_add_emod_self_left,
-          Int.emod_eq_of_lt (Nat.cast_nonneg _) hrlt]
-      rw [HahnSeries.coeff_single_mul, hexp0 _ hnd, mul_zero]
+  obtain ⟨g, hf⟩ := exists_eq_sum_single_mul_expand K n f
   rw [hf, map_sum]
   refine Subalgebra.sum_mem _ fun r _ ↦ ?_
   have h1 : toHahnSeries K n (HahnSeries.single (r : ℤ) (1 : K)) =
