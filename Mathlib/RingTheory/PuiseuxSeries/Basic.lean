@@ -57,17 +57,24 @@ def expand (m : ℕ+) : LaurentSeries K →+* LaurentSeries K :=
     (fun _ _ => mul_left_cancel₀ (by exact_mod_cast m.ne_zero))
     fun _ _ => mul_le_mul_iff_right₀ (by exact_mod_cast m.pos)
 
+/-- The expansion `expand K q` multiplies `orderTop` by `q`. -/
+theorem orderTop_expand (q : ℕ+) (c : LaurentSeries K) :
+    (expand K q c).orderTop = c.orderTop.map fun k => (q : ℤ) * k := by
+  rw [show expand K q c = HahnSeries.embDomain _ c from HahnSeries.embDomainRingHom_apply _ _ _ c,
+    HahnSeries.orderTop_embDomain]
+  rfl
+
 /-- The embedding `K((t)) →+* HahnSeries ℚ K`, "`t ↦ t ^ (1 / n)`":
 `embDomainRingHom` along the exponent map `k ↦ k / n : ℤ → ℚ`. -/
 def toHahn (n : ℕ+) : LaurentSeries K →+* HahnSeries ℚ K :=
   HahnSeries.embDomainRingHom
-    (AddMonoidHom.mk' (fun k : ℤ => (k : ℚ) / (n : ℕ)) fun a b => by push_cast; ring)
+    (AddMonoidHom.mk' (fun k : ℤ => (k : ℚ) / (n : ℚ)) fun a b => by push_cast; ring)
     (fun _ _ h => Int.cast_injective ((div_left_inj' (Nat.cast_ne_zero.mpr n.ne_zero)).mp h))
     fun _ _ => (div_le_div_iff_of_pos_right (Nat.cast_pos.mpr n.pos)).trans Int.cast_le
 
 @[simp]
 theorem toHahn_single (n : ℕ+) (k : ℤ) (a : K) :
-    toHahn K n (HahnSeries.single k a) = HahnSeries.single ((k : ℚ) / (n : ℕ)) a :=
+    toHahn K n (HahnSeries.single k a) = HahnSeries.single ((k : ℚ) / (n : ℚ)) a :=
   HahnSeries.embDomain_single ..
 
 /-- Compatibility of the embeddings: `toHahn K n = toHahn K (n * m) ∘ expand K m` — expanding

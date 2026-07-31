@@ -44,8 +44,8 @@ variable (K : Type*) [Field K]
 `LaurentSeries.toHahn K 1`: it is a root of the monic polynomial `Y ^ n - t`. -/
 theorem isIntegral_single_one_div (n : ℕ+) :
     IsIntegral (LaurentSeries.toHahn K 1).fieldRange
-      (HahnSeries.single ((1 : ℚ) / (n : ℕ)) (1 : K)) := by
-  have hpow : (HahnSeries.single ((1 : ℚ) / (n : ℕ)) (1 : K)) ^ (n : ℕ)
+      (HahnSeries.single ((1 : ℚ) / (n : ℚ)) (1 : K)) := by
+  have hpow : (HahnSeries.single ((1 : ℚ) / (n : ℚ)) (1 : K)) ^ (n : ℕ)
       = HahnSeries.single (1 : ℚ) (1 : K) := by
     simp [HahnSeries.single_pow, one_div, nsmul_eq_mul, n.ne_zero]
   refine ⟨X ^ (n : ℕ) - C ⟨HahnSeries.single (1 : ℚ) (1 : K),
@@ -60,7 +60,7 @@ theorem isIntegral_single_one_div (n : ℕ+) :
 theorem mem_adjoin_single_of_mem_fieldRange (n : ℕ+) {x : HahnSeries ℚ K}
     (hx : x ∈ (LaurentSeries.toHahn K n).fieldRange) :
     x ∈ Algebra.adjoin (LaurentSeries.toHahn K 1).fieldRange
-      {HahnSeries.single ((1 : ℚ) / (n : ℕ)) (1 : K)} := by
+      {HahnSeries.single ((1 : ℚ) / (n : ℚ)) (1 : K)} := by
   classical
   obtain ⟨f, rfl⟩ := hx
   obtain ⟨b, hb⟩ : BddBelow f.support :=
@@ -101,7 +101,7 @@ theorem mem_adjoin_single_of_mem_fieldRange (n : ℕ+) {x : HahnSeries ℚ K}
   rw [hf, map_sum]
   refine Subalgebra.sum_mem _ fun r _ => ?_
   have h1 : toHahn K n (HahnSeries.single (r : ℤ) (1 : K))
-      = HahnSeries.single ((1 : ℚ) / (n : ℕ)) (1 : K) ^ r := by
+      = HahnSeries.single ((1 : ℚ) / (n : ℚ)) (1 : K) ^ r := by
     rw [HahnSeries.single_pow, one_pow, toHahn_single, nsmul_eq_mul, mul_one_div,
       Int.cast_natCast]
   have h2 : toHahn K n (expand K n (g r)) ∈ (toHahn K 1).fieldRange :=

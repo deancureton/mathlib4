@@ -259,6 +259,13 @@ theorem X_order_mul_powerSeriesPart {n : ℕ} {f : R⸨X⸩} (hn : n = f.order) 
   simp only [map_mul, map_pow, ofPowerSeries_X, single_pow, nsmul_eq_mul, mul_one, one_pow, hn,
     single_order_mul_powerSeriesPart]
 
+/-- A Laurent series with nonnegative `orderTop` lies in the range of the coercion from power
+series. -/
+theorem exists_ofPowerSeries_eq_of_orderTop_nonneg {f : R⸨X⸩} (hf : 0 ≤ f.orderTop) :
+    ∃ F : R⟦X⟧, ofPowerSeries ℤ R F = f :=
+  ⟨PowerSeries.X ^ f.order.toNat * f.powerSeriesPart,
+    X_order_mul_powerSeriesPart (Int.toNat_of_nonneg (zero_le_orderTop_iff.mp hf))⟩
+
 end Semiring
 
 instance [CommSemiring R] : Algebra R⟦X⟧ R⸨X⸩ := (HahnSeries.ofPowerSeries ℤ R).toAlgebra
