@@ -41,8 +41,6 @@ puiseux series, laurent series, hahn series
 
 @[expose] public section
 
-open HahnSeries Polynomial
-
 noncomputable section
 
 namespace LaurentSeries

@@ -62,7 +62,7 @@ theorem mem_adjoin_single_of_mem_fieldRange (n : ℕ+) {x : HahnSeries ℚ K}
     x ∈ Algebra.adjoin (LaurentSeries.toHahnSeries K 1).fieldRange
       {HahnSeries.single ((1 : ℚ) / (n : ℚ)) (1 : K)} := by
   obtain ⟨f, rfl⟩ := hx
-  obtain ⟨g, hf⟩ := exists_eq_sum_single_mul_expand K n f
+  obtain ⟨g, hf⟩ := exists_eq_sum_single_mul_expand n f
   rw [hf, map_sum]
   refine Subalgebra.sum_mem _ fun r _ ↦ ?_
   have h1 : toHahnSeries K n (HahnSeries.single (r : ℤ) (1 : K)) =

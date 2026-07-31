@@ -273,14 +273,18 @@ def expand (m : ℕ+) : R⸨X⸩ →+* R⸨X⸩ :=
     (fun _ _ ↦ mul_left_cancel₀ (by exact_mod_cast m.ne_zero))
     fun _ _ ↦ mul_le_mul_iff_right₀ (by exact_mod_cast m.pos)
 
-variable (R) in
-theorem orderTop_expand (q : ℕ+) (c : R⸨X⸩) :
-    (expand R q c).orderTop = c.orderTop.map fun k : ℤ ↦ (q : ℤ) * k := by
-  rw [show expand R q c = HahnSeries.embDomain _ c from HahnSeries.embDomainRingHom_apply _ _ _ c,
+@[simp]
+theorem expand_single (m : ℕ+) (k : ℤ) (a : R) :
+    expand R m (single k a) = single ((m : ℤ) * k) a :=
+  HahnSeries.embDomain_single ..
+
+@[simp]
+theorem orderTop_expand (m : ℕ+) (f : R⸨X⸩) :
+    (expand R m f).orderTop = f.orderTop.map fun k : ℤ ↦ (m : ℤ) * k := by
+  rw [show expand R m f = HahnSeries.embDomain _ f from HahnSeries.embDomainRingHom_apply _ _ _ f,
     HahnSeries.orderTop_embDomain]
   rfl
 
-variable (R) in
 /-- Every Laurent series decomposes as `∑ r < n, X ^ r * expand R n (g r)`, where `g r`
 collects its coefficients at exponents congruent to `r` mod `n`. -/
 theorem exists_eq_sum_single_mul_expand (n : ℕ+) (f : R⸨X⸩) :

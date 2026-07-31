@@ -25,7 +25,8 @@ maximal ideal of `K⟦X⟧` (that is, of the coefficientwise application of
 
 - `Polynomial.Monic.exists_factorization_rootMultiplicity`: a monic `p` over `K⟦X⟧` of degree
   `m` whose reduction has a root `a : K` of multiplicity `k` factors as
-  `p = g * h` with `g`, `h` monic of degrees `k` and `m - k`.
+  `p = g * h` with `g`, `h` monic of degrees `k` and `m - k`, and the reduction of `g` is
+  `(X - C a) ^ k`.
 
 -/
 
@@ -90,23 +91,26 @@ theorem Monic.exists_factorization_rootMultiplicity_zero {p : (PowerSeries K)[X]
 
 /-- A monic `p` over `K⟦X⟧` of degree `m` whose reduction
 (coefficientwise `PowerSeries.constantCoeff`) has a root `a : K` of multiplicity `k`
-factors as `p = g * h` with `g`, `h` monic of degrees `k` and `m - k`. -/
+factors as `p = g * h` with `g`, `h` monic of degrees `k` and `m - k`, and the reduction of
+`g` is `(X - C a) ^ k`. -/
 theorem Monic.exists_factorization_rootMultiplicity {p : (PowerSeries K)[X]} {m k : ℕ} {a : K}
     (hp : p.Monic) (hm : p.natDegree = m)
     (hk : (p.map (PowerSeries.constantCoeff (R := K))).rootMultiplicity a = k) :
     ∃ g h : (PowerSeries K)[X], g.Monic ∧ h.Monic ∧ p = g * h ∧
-      g.natDegree = k ∧ h.natDegree = m - k := by
+      g.natDegree = k ∧ h.natDegree = m - k ∧
+      g.map (PowerSeries.constantCoeff (R := K)) = (X - C a) ^ k := by
   set c : PowerSeries K := PowerSeries.C a with hc
   have hkP : ((p.comp (X + C c)).map
       (PowerSeries.constantCoeff (R := K))).rootMultiplicity 0 = k := by
     rw [show (p.comp (X + C c)).map (PowerSeries.constantCoeff (R := K)) =
         (p.map (PowerSeries.constantCoeff (R := K))).comp (X + C a) by
       simp [Polynomial.map_comp, hc], ← Polynomial.rootMultiplicity_eq_rootMultiplicity, hk]
-  obtain ⟨g₀, h₀, hg₀, hh₀, hpr, hg₀deg, hh₀deg, -⟩ :=
+  obtain ⟨g₀, h₀, hg₀, hh₀, hpr, hg₀deg, hh₀deg, hg₀red⟩ :=
     (hp.comp_X_add_C c).exists_factorization_rootMultiplicity_zero (m := m)
       (by simp [Polynomial.natDegree_comp, hm]) hkP
   refine ⟨g₀.comp (X - C c), h₀.comp (X - C c), hg₀.comp_X_sub_C c, hh₀.comp_X_sub_C c, ?_,
-    by simp [Polynomial.natDegree_comp, hg₀deg], by simp [Polynomial.natDegree_comp, hh₀deg]⟩
-  simp [← Polynomial.mul_comp, ← hpr, Polynomial.comp_assoc]
+    by simp [Polynomial.natDegree_comp, hg₀deg], by simp [Polynomial.natDegree_comp, hh₀deg], ?_⟩
+  · simp [← Polynomial.mul_comp, ← hpr, Polynomial.comp_assoc]
+  · simp [Polynomial.map_comp, hg₀red, hc]
 
 end Polynomial

@@ -493,8 +493,8 @@ theorem embDomain_single {f : Γ ↪o Γ'} {g : Γ} {r : R} :
   rwa [support_single_of_ne hr, Set.image_singleton, Set.mem_singleton_iff]
 
 @[simp]
-theorem embDomain_embDomain {Γ'' : Type*} [PartialOrder Γ''] (f : Γ ↪o Γ') (g : Γ' ↪o Γ'')
-    (x : R⟦Γ⟧) : embDomain g (embDomain f x) = embDomain (f.trans g) x := by
+theorem embDomain_embDomain {Γ'' : Type*} [PartialOrder Γ''] {f : Γ ↪o Γ'} {g : Γ' ↪o Γ''}
+    {x : R⟦Γ⟧} : embDomain g (embDomain f x) = embDomain (f.trans g) x := by
   ext b
   by_cases hb : b ∈ Set.range (f.trans g)
   · obtain ⟨a, rfl⟩ := hb
