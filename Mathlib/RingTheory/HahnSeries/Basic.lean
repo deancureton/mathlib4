@@ -496,13 +496,11 @@ theorem embDomain_single {f : Γ ↪o Γ'} {g : Γ} {r : R} :
 theorem embDomain_embDomain {Γ'' : Type*} [PartialOrder Γ''] {f : Γ ↪o Γ'} {g : Γ' ↪o Γ''}
     {x : R⟦Γ⟧} : embDomain g (embDomain f x) = embDomain (f.trans g) x := by
   ext b
-  by_cases hb : b ∈ Set.range (f.trans g)
-  · obtain ⟨a, rfl⟩ := hb
-    rw [embDomain_coeff, RelEmbedding.trans_apply, embDomain_coeff, embDomain_coeff]
+  obtain ⟨a, rfl⟩ | hb := em (b ∈ Set.range (f.trans g))
+  · rw [embDomain_coeff, RelEmbedding.trans_apply, embDomain_coeff, embDomain_coeff]
   · rw [embDomain_of_notMem_range hb]
-    by_cases hb' : b ∈ Set.range g
-    · obtain ⟨c, rfl⟩ := hb'
-      rw [embDomain_coeff, embDomain_of_notMem_range fun ⟨a, ha⟩ ↦ hb ⟨a, by simp [ha]⟩]
+    obtain ⟨c, rfl⟩ | hb' := em (b ∈ Set.range g)
+    · rw [embDomain_coeff, embDomain_of_notMem_range fun ⟨a, ha⟩ ↦ hb ⟨a, by simp [ha]⟩]
     · exact embDomain_of_notMem_range hb'
 
 theorem mem_range_embDomain_iff {f : Γ ↪o Γ'} {x : R⟦Γ'⟧} :
@@ -516,9 +514,8 @@ theorem mem_range_embDomain_iff {f : Γ ↪o Γ'} {x : R⟦Γ'⟧} :
     · obtain ⟨a, b, hab, h⟩ := x.isPWO_support.exists_lt (f := fun k ↦ f (g k)) hg
       exact ⟨a, b, hab, f.le_iff_le.mp h⟩
     · ext b
-      by_cases hb : b ∈ Set.range f
-      · obtain ⟨a, rfl⟩ := hb
-        exact embDomain_coeff
+      obtain ⟨a, rfl⟩ | hb := em (b ∈ Set.range f)
+      · exact embDomain_coeff
       · exact (embDomain_of_notMem_range hb).trans (of_not_not fun con ↦ hb (hx con)).symm
 
 theorem embDomain_injective {f : Γ ↪o Γ'} :
