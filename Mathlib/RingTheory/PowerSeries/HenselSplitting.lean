@@ -57,14 +57,14 @@ theorem Monic.exists_factorization_rootMultiplicity_zero {p : (PowerSeries K)[X]
   set e := PowerSeries.residueFieldOfPowerSeries (k := K)
   set φ := (p : PowerSeries A).map (IsLocalRing.residue A) with hφ
   -- The residue field of `A` is `K`, so `φ` corresponds to the reduction of `p`.
-  have key : φ.map e.toRingHom
-      = ((p.map (PowerSeries.constantCoeff (R := K)) : K[X]) : PowerSeries K) := by
+  have key : φ.map e.toRingHom =
+      ((p.map (PowerSeries.constantCoeff (R := K)) : K[X]) : PowerSeries K) := by
     ext n
     simp only [hφ, PowerSeries.coeff_map, Polynomial.coeff_coe, Polynomial.coeff_map]
     rfl
   -- The order of the coercion of a nonzero polynomial is its root multiplicity at `0`.
-  have hordK : ((p.map (PowerSeries.constantCoeff (R := K)) : K[X]) : PowerSeries K).order
-      = (k : ℕ∞) := by
+  have hordK : ((p.map (PowerSeries.constantCoeff (R := K)) : K[X]) : PowerSeries K).order =
+      (k : ℕ∞) := by
     have hnz : (p.map (PowerSeries.constantCoeff (R := K))) ≠ 0 := (hp.map _).ne_zero
     rw [← hk, Polynomial.rootMultiplicity_eq_natTrailingDegree', PowerSeries.order_eq_nat]
     refine ⟨?_, fun i hi ↦ by simpa using Polynomial.coeff_eq_zero_of_lt_natTrailingDegree hi⟩
@@ -114,8 +114,8 @@ theorem Monic.exists_factorization_rootMultiplicity {p : (PowerSeries K)[X]} {m 
   -- Shift the root to `0`.
   have hPmonic : (p.comp (X + C c)).Monic := hp.comp_X_add_C c
   have hPdeg : (p.comp (X + C c)).natDegree = m := by simp [Polynomial.natDegree_comp, hm]
-  have hred : (p.comp (X + C c)).map (PowerSeries.constantCoeff (R := K))
-      = (p.map (PowerSeries.constantCoeff (R := K))).comp (X + C a) := by
+  have hred : (p.comp (X + C c)).map (PowerSeries.constantCoeff (R := K)) =
+      (p.map (PowerSeries.constantCoeff (R := K))).comp (X + C a) := by
     simp [Polynomial.map_comp, hc]
   have hkP : ((p.comp (X + C c)).map
       (PowerSeries.constantCoeff (R := K))).rootMultiplicity 0 = k := by

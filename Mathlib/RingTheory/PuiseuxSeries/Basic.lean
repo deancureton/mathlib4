@@ -59,7 +59,7 @@ def expand (m : ℕ+) : LaurentSeries K →+* LaurentSeries K :=
 
 /-- `LaurentSeries.expand K q` multiplies the `orderTop` of a Laurent series by `q`. -/
 theorem orderTop_expand (q : ℕ+) (c : LaurentSeries K) :
-    (expand K q c).orderTop = c.orderTop.map fun k ↦ (q : ℤ) * k := by
+    (expand K q c).orderTop = c.orderTop.map fun k : ℤ ↦ (q : ℤ) * k := by
   rw [show expand K q c = HahnSeries.embDomain _ c from HahnSeries.embDomainRingHom_apply _ _ _ c,
     HahnSeries.orderTop_embDomain]
   rfl

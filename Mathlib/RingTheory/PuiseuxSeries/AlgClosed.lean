@@ -132,8 +132,8 @@ variable {K : Type*} [Field K]
 private theorem toHahnSeries_expand_single_scaling (n q : ℕ+) (a : ℤ) (c : LaurentSeries K)
     (i m : ℕ) :
     HahnSeries.single ((a : ℚ) / ((n * q : ℕ+) : ℚ)) (1 : K) ^ m *
-        toHahnSeries K (n * q) (expand K q c * HahnSeries.single (a * ((i : ℤ) - (m : ℤ))) 1)
-      = toHahnSeries K n c * HahnSeries.single ((a : ℚ) / ((n * q : ℕ+) : ℚ)) (1 : K) ^ i := by
+        toHahnSeries K (n * q) (expand K q c * HahnSeries.single (a * ((i : ℤ) - (m : ℤ))) 1) =
+      toHahnSeries K n c * HahnSeries.single ((a : ℚ) / ((n * q : ℕ+) : ℚ)) (1 : K) ^ i := by
   rw [map_mul, ← RingHom.comp_apply (toHahnSeries K (n * q)) (expand K q),
     toHahnSeries_comp_expand, toHahnSeries_single, HahnSeries.single_pow, HahnSeries.single_pow,
     mul_left_comm, HahnSeries.single_mul_single]
@@ -158,8 +158,8 @@ private theorem newton_slope_scaling (n : ℕ+) {p : Polynomial (LaurentSeries K
       (∃ i₀ < m, (P.map (PowerSeries.constantCoeff (R := K))).coeff i₀ ≠ 0) ∧
       ∀ y : HahnSeries ℚ K,
         (p.map (toHahnSeries K n)).eval
-            (HahnSeries.single ((a : ℚ) / ((n * q : ℕ+) : ℚ)) 1 * y)
-          = HahnSeries.single ((a : ℚ) / ((n * q : ℕ+) : ℚ)) 1 ^ m *
+            (HahnSeries.single ((a : ℚ) / ((n * q : ℕ+) : ℚ)) 1 * y) =
+          HahnSeries.single ((a : ℚ) / ((n * q : ℕ+) : ℚ)) 1 ^ m *
               (P.map ((toHahnSeries K (n * q)).comp (HahnSeries.ofPowerSeries ℤ K))).eval y := by
   classical
   obtain ⟨i₁, hi₁m, hi₁⟩ := hex

@@ -45,8 +45,8 @@ variable (K : Type*) [Field K]
 theorem isIntegral_single_one_div (n : ℕ+) :
     IsIntegral (LaurentSeries.toHahnSeries K 1).fieldRange
       (HahnSeries.single ((1 : ℚ) / (n : ℚ)) (1 : K)) := by
-  have hpow : (HahnSeries.single ((1 : ℚ) / (n : ℚ)) (1 : K)) ^ (n : ℕ)
-      = HahnSeries.single (1 : ℚ) (1 : K) := by
+  have hpow : (HahnSeries.single ((1 : ℚ) / (n : ℚ)) (1 : K)) ^ (n : ℕ) =
+      HahnSeries.single (1 : ℚ) (1 : K) := by
     simp [HahnSeries.single_pow, one_div, nsmul_eq_mul, n.ne_zero]
   refine ⟨X ^ (n : ℕ) - C ⟨HahnSeries.single (1 : ℚ) (1 : K),
       ⟨HahnSeries.single (1 : ℤ) (1 : K), by simp [toHahnSeries_single]⟩⟩,
@@ -100,8 +100,8 @@ theorem mem_adjoin_single_of_mem_fieldRange (n : ℕ+) {x : HahnSeries ℚ K}
       rw [HahnSeries.coeff_single_mul, hexp0 _ hnd, mul_zero]
   rw [hf, map_sum]
   refine Subalgebra.sum_mem _ fun r _ ↦ ?_
-  have h1 : toHahnSeries K n (HahnSeries.single (r : ℤ) (1 : K))
-      = HahnSeries.single ((1 : ℚ) / (n : ℚ)) (1 : K) ^ r := by
+  have h1 : toHahnSeries K n (HahnSeries.single (r : ℤ) (1 : K)) =
+      HahnSeries.single ((1 : ℚ) / (n : ℚ)) (1 : K) ^ r := by
     rw [HahnSeries.single_pow, one_pow, toHahnSeries_single, nsmul_eq_mul, mul_one_div,
       Int.cast_natCast]
   have h2 : toHahnSeries K n (expand K n (g r)) ∈ (toHahnSeries K 1).fieldRange :=
