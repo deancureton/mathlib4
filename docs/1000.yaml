@@ -425,6 +425,8 @@ Q388525:
 Q401319:
   title: Puiseux's theorem
   # also in 100.yaml
+  decl: PuiseuxSeries.isAlgClosure
+  authors: Dean Cureton
 
 Q401905:
   title: Skorokhod's representation theorem
