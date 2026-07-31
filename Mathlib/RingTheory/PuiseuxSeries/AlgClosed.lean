@@ -134,8 +134,8 @@ private theorem orderTop_expand_mul_single_nonneg (q : ℕ+) (c : LaurentSeries 
   · rw [orderTop_expand_mul_single q hc]
     exact_mod_cast h hc
 
-/-- Minimality of the Newton slope at `i₀`, in the cleared-denominators form used to check that
-the rescaled coefficients are integral. -/
+/-- Choosing `i₀` of minimal Newton slope makes the orders of the rescaled coefficients
+nonnegative. -/
 private theorem newton_slope_min_le {p : Polynomial (LaurentSeries K)} {m i₀ : ℕ} (hi₀m : i₀ < m)
     (hmin : ∀ i < m, p.coeff i ≠ 0 →
       ((p.coeff i₀).order : ℚ) / ((m - i₀ : ℕ) : ℚ) ≤ ((p.coeff i).order : ℚ) / ((m - i : ℕ) : ℚ))
@@ -149,8 +149,9 @@ private theorem newton_slope_min_le {p : Polynomial (LaurentSeries K)} {m i₀ :
   nlinarith [show (p.coeff i₀).order * ((m : ℤ) - i) ≤ (p.coeff i).order * ((m : ℤ) - i₀) by
     exact_mod_cast h]
 
-/-- Assembling an integral polynomial from a family `d` of Laurent series of nonnegative order,
-normalized by `d m = 1` and `d (m - 1) = 0`, with `d i₀` a unit at the origin. -/
+/-- A family `d` of Laurent series of nonnegative order with `d m = 1` and `d (m - 1) = 0`
+lifts to a monic polynomial of degree `m` over `K⟦X⟧`, with nonzero reduction at `i₀` when
+`d i₀` has order zero. -/
 private theorem exists_integral_poly_of_orderTop_nonneg {m i₀ : ℕ} (d : ℕ → LaurentSeries K)
     (hdnn : ∀ i : ℕ, (0 : WithTop ℤ) ≤ (d i).orderTop) (hdm : d m = 1) (hdm1 : d (m - 1) = 0)
     (hi₀m : i₀ ≤ m) (hd₀ : (d i₀).orderTop = ((0 : ℤ) : WithTop ℤ)) :
@@ -181,8 +182,8 @@ private theorem exists_integral_poly_of_orderTop_nonneg {m i₀ : ℕ} (d : ℕ 
     convert this
     simpa using (LaurentSeries.coeff_coe_powerSeries (D i₀) 0).symm
 
-/-- The root-transfer eval identity, given that the coefficients of `P` are the rescaled
-coefficients of `p`. -/
+/-- If the coefficients of `P` are the rescaled coefficients of `p`, then evaluating
+`p.map (toHahnSeries K n)` at `τ * y` equals `τ ^ m` times evaluating the image of `P` at `y`. -/
 private theorem eval_map_toHahnSeries_of_coeff (n q : ℕ+) (a : ℤ)
     {p : Polynomial (LaurentSeries K)} {P : Polynomial (PowerSeries K)} {m : ℕ}
     (hm : p.natDegree = m) (hnd : P.natDegree = m)

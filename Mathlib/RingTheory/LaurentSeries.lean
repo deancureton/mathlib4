@@ -281,9 +281,8 @@ theorem orderTop_expand (q : ℕ+) (c : R⸨X⸩) :
   rfl
 
 variable (R) in
-/-- Sorting a Laurent series by the residues of its exponents modulo `n`: every `f` decomposes
-as `∑ r < n, X ^ r * (expand R n) (g r)`, where `g r` collects the coefficients of `f` in
-exponents congruent to `r` mod `n`. -/
+/-- Every Laurent series decomposes as `∑ r < n, X ^ r * expand R n (g r)`, where `g r`
+collects its coefficients at exponents congruent to `r` mod `n`. -/
 theorem exists_eq_sum_single_mul_expand (n : ℕ+) (f : R⸨X⸩) :
     ∃ g : ℕ → R⸨X⸩,
       f = ∑ r ∈ Finset.range (n : ℕ), HahnSeries.single (r : ℤ) 1 * expand R n (g r) := by

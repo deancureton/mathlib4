@@ -86,8 +86,8 @@ open LaurentSeries
 
 variable (K : Type*) [Field K]
 
-/-- The Puiseux subfield `⨆ n, (toHahnSeries K n).fieldRange` of `HahnSeries ℚ K`, the directed
-union of the images `K((t ^ (1 / n)))` of the embeddings `toHahnSeries K n`. -/
+/-- The subfield of `HahnSeries ℚ K` consisting of Puiseux series, the directed union of the
+ranges of the embeddings `toHahnSeries K n`. -/
 def subfield : Subfield (HahnSeries ℚ K) :=
   ⨆ n : ℕ+, (toHahnSeries K n).fieldRange
 
