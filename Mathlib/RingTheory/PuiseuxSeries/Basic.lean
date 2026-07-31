@@ -125,11 +125,32 @@ variable (K : Type*) [Field K]
 instance : Field (PuiseuxSeries K) :=
   inferInstanceAs (Field ↥(subfield K))
 
+instance : CoeOut (PuiseuxSeries K) (HahnSeries ℚ K) :=
+  ⟨Subtype.val⟩
+
+variable {K}
+
+@[simp, norm_cast]
+theorem coe_add (x y : PuiseuxSeries K) : ((x + y : PuiseuxSeries K) : HahnSeries ℚ K) = x + y :=
+  rfl
+
+@[simp, norm_cast]
+theorem coe_mul (x y : PuiseuxSeries K) : ((x * y : PuiseuxSeries K) : HahnSeries ℚ K) = x * y :=
+  rfl
+
+variable (K)
+
 /-- The `K((t))`-algebra structure on Puiseux series, given by `toHahnSeries K 1`
 corestricted to the Puiseux subfield. -/
 instance algebraLaurentSeries : Algebra (LaurentSeries K) (PuiseuxSeries K) :=
   RingHom.toAlgebra <|
     (LaurentSeries.toHahnSeries K 1).codRestrict (subfield K) fun x ↦
       (mem_subfield_iff K).mpr ⟨1, RingHom.mem_fieldRange_self _ x⟩
+
+@[simp, norm_cast]
+theorem coe_algebraMap {K : Type*} [Field K] (f : LaurentSeries K) :
+    (algebraMap (LaurentSeries K) (PuiseuxSeries K) f : HahnSeries ℚ K) =
+      LaurentSeries.toHahnSeries K 1 f :=
+  rfl
 
 end PuiseuxSeries
