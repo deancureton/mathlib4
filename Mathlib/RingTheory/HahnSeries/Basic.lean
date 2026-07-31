@@ -502,7 +502,7 @@ theorem embDomain_embDomain {Γ'' : Type*} [PartialOrder Γ''] (f : Γ ↪o Γ')
   · rw [embDomain_of_notMem_range hb]
     by_cases hb' : b ∈ Set.range g
     · obtain ⟨c, rfl⟩ := hb'
-      rw [embDomain_coeff, embDomain_of_notMem_range fun ⟨a, ha⟩ => hb ⟨a, by simp [ha]⟩]
+      rw [embDomain_coeff, embDomain_of_notMem_range fun ⟨a, ha⟩ ↦ hb ⟨a, by simp [ha]⟩]
     · exact embDomain_of_notMem_range hb'
 
 theorem mem_range_embDomain_iff {f : Γ ↪o Γ'} {x : R⟦Γ'⟧} :
