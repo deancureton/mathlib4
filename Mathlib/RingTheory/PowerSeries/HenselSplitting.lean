@@ -35,7 +35,7 @@ namespace Polynomial
 
 variable {K : Type*} [Field K]
 
-/-- **Hensel splitting at zero**: a monic `p` over `K⟦X⟧` of degree `m` whose reduction
+/-- A monic `p` over `K⟦X⟧` of degree `m` whose reduction
 (coefficientwise `PowerSeries.constantCoeff`) has `0` as a root of multiplicity `k`
 factors as `p = g * h` with `g`, `h` monic of degrees `k` and `m - k`, and `g`
 distinguished: its reduction is `X ^ k`. -/
@@ -102,7 +102,7 @@ theorem Monic.exists_factorization_rootMultiplicity_zero {p : (PowerSeries K)[X]
       (show f.map (IsLocalRing.residue A) = X ^ k from hfdeg ▸ H.isDistinguishedAt.map_eq_X_pow)
     rwa [Polynomial.map_map, Polynomial.map_pow, Polynomial.map_X] at h1
 
-/-- **Hensel splitting at a root**: a monic `p` over `K⟦X⟧` of degree `m` whose reduction
+/-- A monic `p` over `K⟦X⟧` of degree `m` whose reduction
 (coefficientwise `PowerSeries.constantCoeff`) has a root `a : K` of multiplicity `k`
 factors as `p = g * h` with `g`, `h` monic of degrees `k` and `m - k`. -/
 theorem Monic.exists_factorization_rootMultiplicity {p : (PowerSeries K)[X]} {m k : ℕ} {a : K}

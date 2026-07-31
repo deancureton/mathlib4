@@ -35,7 +35,7 @@ degree. Given a monic polynomial `p` of degree `m` over `K((t))`:
 ## Main results
 
 * `PuiseuxSeries.exists_root_mem_subfield`: every monic polynomial of positive degree over
-  `K((t))`, mapped along any embedding `LaurentSeries.toHahn K n`, has a root in the Puiseux
+  `K((t))`, mapped along any embedding `LaurentSeries.toHahnSeries K n`, has a root in the Puiseux
   subfield of `HahnSeries ℚ K`.
 * `PuiseuxSeries.isAlgClosed`: `PuiseuxSeries K` is algebraically closed for `K` algebraically
   closed of characteristic zero.
@@ -54,9 +54,9 @@ puiseux series, newton polygon, algebraically closed, algebraic closure
 
 @[expose] public section
 
-noncomputable section
-
 open Polynomial
+
+noncomputable section
 
 /-! ## Auxiliary polynomial lemmas
 
@@ -68,10 +68,8 @@ power of `X`.
 
 namespace Polynomial
 
-/-- **Tschirnhausen substitution**: for `p` monic of degree `m` over a field `F` with
-`(m : F) ≠ 0`, substituting `X + C (-p.coeff (m - 1) / m)` for the variable kills the
-coefficient of degree `m - 1`. (Monicity and the degree are preserved by
-`Polynomial.Monic.comp_X_add_C` and `Polynomial.natDegree_taylor`.) -/
+/-- For `p` monic of degree `m` over a field `F` with `(m : F) ≠ 0`, substituting
+`X + C (-p.coeff (m - 1) / m)` for the variable kills the coefficient of degree `m - 1`. -/
 private theorem Monic.tschirnhausen {F : Type*} [Field F] {p : F[X]} {m : ℕ} (hp : p.Monic)
     (hm : p.natDegree = m) (hmF : (m : F) ≠ 0) :
     (p.comp (X + C (-p.coeff (m - 1) / (m : F)))).coeff (m - 1) = 0 := by
@@ -89,9 +87,9 @@ private theorem Monic.tschirnhausen {F : Type*} [Field F] {p : F[X]} {m : ℕ} (
   field_simp
   ring
 
-/-- **A monic non-power has a mixed root**: over an algebraically closed field, a monic `r` of
-degree `m` with `(m : K) ≠ 0`, vanishing coefficient of degree `m - 1`, and `r ≠ X ^ m` has a
-root of multiplicity strictly between `0` and `m`. -/
+/-- Over an algebraically closed field, a monic `r` of degree `m` with `(m : K) ≠ 0`,
+vanishing coefficient of degree `m - 1`, and `r ≠ X ^ m` has a root of multiplicity strictly
+between `0` and `m`. -/
 private theorem Monic.exists_rootMultiplicity_pos_lt {K : Type*} [Field K] [IsAlgClosed K]
     {r : K[X]} {m : ℕ} (hr : r.Monic) (hm : r.natDegree = m) (hmK : (m : K) ≠ 0)
     (hsub : r.coeff (m - 1) = 0) (hne : r ≠ X ^ m) :
@@ -118,7 +116,7 @@ end Polynomial
 
 /-! ## The Newton slope rescaling
 
-The per-summand monomial scaling identity for the embeddings `toHahn`, and the main rescaling
+The per-summand monomial scaling identity for the embeddings `toHahnSeries`, and the main rescaling
 lemma producing an integral polynomial with the right reduction and the root-transfer eval
 identity.
 -/
@@ -127,27 +125,29 @@ namespace LaurentSeries
 
 variable {K : Type*} [Field K]
 
-/-- **Monomial scaling identity** (per-summand computation of the Newton rescaling): for
-`τ = single (a / (nq)) 1`,
-`τ ^ m * toHahn K (n * q) (expand K q c * single (a * (i - m)) 1) = toHahn K n c * τ ^ i`. -/
-private theorem toHahn_expand_single_scaling (n q : ℕ+) (a : ℤ) (c : LaurentSeries K) (i m : ℕ) :
+/-- The per-summand monomial scaling identity for the Newton rescaling: for
+`τ = single (a / (nq)) 1`, we have
+`τ ^ m * toHahnSeries K (n * q) (expand K q c * single (a * (i - m)) 1)
+  = toHahnSeries K n c * τ ^ i`. -/
+private theorem toHahnSeries_expand_single_scaling (n q : ℕ+) (a : ℤ) (c : LaurentSeries K)
+    (i m : ℕ) :
     HahnSeries.single ((a : ℚ) / ((n * q : ℕ+) : ℚ)) (1 : K) ^ m *
-        toHahn K (n * q) (expand K q c * HahnSeries.single (a * ((i : ℤ) - (m : ℤ))) 1)
-      = toHahn K n c * HahnSeries.single ((a : ℚ) / ((n * q : ℕ+) : ℚ)) (1 : K) ^ i := by
-  rw [map_mul, ← RingHom.comp_apply (toHahn K (n * q)) (expand K q),
-    toHahn_comp_expand, toHahn_single, HahnSeries.single_pow, HahnSeries.single_pow,
+        toHahnSeries K (n * q) (expand K q c * HahnSeries.single (a * ((i : ℤ) - (m : ℤ))) 1)
+      = toHahnSeries K n c * HahnSeries.single ((a : ℚ) / ((n * q : ℕ+) : ℚ)) (1 : K) ^ i := by
+  rw [map_mul, ← RingHom.comp_apply (toHahnSeries K (n * q)) (expand K q),
+    toHahnSeries_comp_expand, toHahnSeries_single, HahnSeries.single_pow, HahnSeries.single_pow,
     mul_left_comm, HahnSeries.single_mul_single]
   simp only [one_pow, mul_one, nsmul_eq_mul]
   congr 1
   push_cast
   ring_nf
 
-/-- **Newton slope scaling**: given `p` monic of degree `m` over `K((t))` with vanishing
+/-- Given `p` monic of degree `m` over `K((t))` with vanishing
 subleading coefficient and some nonzero lower coefficient, there are `q ≥ 1`, `a : ℤ`, and a
 monic `P` of degree `m` over `K⟦X⟧` whose reduction has vanishing subleading coefficient but
 some nonzero coefficient below the top, such that roots transfer: evaluating
-`p.map (toHahn K n)` at `τ * y` (with `τ = single (a / (nq)) 1`) equals `τ ^ m` times the
-evaluation at `y` of the image of `P` under `toHahn K (n * q)` composed with the Laurent
+`p.map (toHahnSeries K n)` at `τ * y` (with `τ = single (a / (nq)) 1`) equals `τ ^ m` times the
+evaluation at `y` of the image of `P` under `toHahnSeries K (n * q)` composed with the Laurent
 coercion. -/
 private theorem newton_slope_scaling (n : ℕ+) {p : Polynomial (LaurentSeries K)} {m : ℕ}
     (hp : p.Monic) (hm : p.natDegree = m) (hsub : p.coeff (m - 1) = 0)
@@ -157,15 +157,15 @@ private theorem newton_slope_scaling (n : ℕ+) {p : Polynomial (LaurentSeries K
       (P.map (PowerSeries.constantCoeff (R := K))).coeff (m - 1) = 0 ∧
       (∃ i₀ < m, (P.map (PowerSeries.constantCoeff (R := K))).coeff i₀ ≠ 0) ∧
       ∀ y : HahnSeries ℚ K,
-        (p.map (toHahn K n)).eval
+        (p.map (toHahnSeries K n)).eval
             (HahnSeries.single ((a : ℚ) / ((n * q : ℕ+) : ℚ)) 1 * y)
           = HahnSeries.single ((a : ℚ) / ((n * q : ℕ+) : ℚ)) 1 ^ m *
-              (P.map ((toHahn K (n * q)).comp (HahnSeries.ofPowerSeries ℤ K))).eval y := by
+              (P.map ((toHahnSeries K (n * q)).comp (HahnSeries.ofPowerSeries ℤ K))).eval y := by
   classical
   obtain ⟨i₁, hi₁m, hi₁⟩ := hex
   obtain ⟨i₀, hi₀S, hi₀min⟩ :=
-    ((Finset.range m).filter (fun i => p.coeff i ≠ 0)).exists_min_image
-      (fun i => ((p.coeff i).order : ℚ) / ((m - i : ℕ) : ℚ))
+    ((Finset.range m).filter (fun i ↦ p.coeff i ≠ 0)).exists_min_image
+      (fun i ↦ ((p.coeff i).order : ℚ) / ((m - i : ℕ) : ℚ))
       ⟨i₁, Finset.mem_filter.2 ⟨Finset.mem_range.2 hi₁m, hi₁⟩⟩
   obtain ⟨hi₀m, hc₀⟩ : i₀ < m ∧ p.coeff i₀ ≠ 0 := by
     simpa [Finset.mem_filter, Finset.mem_range] using hi₀S
@@ -182,7 +182,7 @@ private theorem newton_slope_scaling (n : ℕ+) {p : Polynomial (LaurentSeries K
     push_cast [Nat.cast_sub him.le, Nat.cast_sub hi₀m.le] at h
     rw [hqZ]; nlinarith [show a * ((m : ℤ) - i) ≤ (p.coeff i).order * ((m : ℤ) - i₀) by
       exact_mod_cast h]
-  let d : ℕ → LaurentSeries K := fun i =>
+  let d : ℕ → LaurentSeries K := fun i ↦
     expand K q (p.coeff i) * HahnSeries.single (a * ((i : ℤ) - (m : ℤ))) 1
   have hdm : d m = 1 := by simp [d, show p.coeff m = 1 from hm ▸ hp.coeff_natDegree]
   have hdz {i} (hi : p.coeff i = 0) : d i = 0 := by simp [d, hi]
@@ -200,7 +200,7 @@ private theorem newton_slope_scaling (n : ℕ+) {p : Polynomial (LaurentSeries K
         · simp [hdz hci]
         · rw [horder hlt hci]; exact_mod_cast key i hlt hci
     · simp
-  choose D hD using fun i => exists_ofPowerSeries_eq_of_orderTop_nonneg (hdnn i)
+  choose D hD using fun i ↦ exists_ofPowerSeries_eq_of_orderTop_nonneg (hdnn i)
   have hDi {i} (hi : i ≤ m) : HahnSeries.ofPowerSeries ℤ K (D i) = d i :=
     (hD i).trans (if_pos hi)
   have hDm : D m = 1 :=
@@ -214,7 +214,7 @@ private theorem newton_slope_scaling (n : ℕ+) {p : Polynomial (LaurentSeries K
     simp [Polynomial.finsetSum_coeff, Polynomial.coeff_monomial, Finset.sum_ite_eq']
   set P : Polynomial (PowerSeries K) := ∑ i ∈ Finset.range (m + 1), Polynomial.monomial i (D i)
   have hnd : P.natDegree = m :=
-    le_antisymm (Polynomial.natDegree_le_iff_coeff_eq_zero.2 fun N hN => by
+    le_antisymm (Polynomial.natDegree_le_iff_coeff_eq_zero.2 fun N hN ↦ by
         rw [hPcoeff, if_neg (Nat.not_le_of_lt hN)])
       (Polynomial.le_natDegree_of_ne_zero (by rw [hPcoeff, if_pos le_rfl, hDm]; exact one_ne_zero))
   have hmon : P.Monic := by
@@ -233,42 +233,42 @@ private theorem newton_slope_scaling (n : ℕ+) {p : Polynomial (LaurentSeries K
     rw [Polynomial.eval_eq_sum_range' (Nat.lt_succ_of_le (hm ▸ Polynomial.natDegree_map_le)),
       Polynomial.eval_eq_sum_range' (Nat.lt_succ_of_le (hnd ▸ Polynomial.natDegree_map_le)),
       Finset.mul_sum]
-    refine Finset.sum_congr rfl fun i hi => ?_
+    refine Finset.sum_congr rfl fun i hi ↦ ?_
     have him : i ≤ m := Nat.lt_succ_iff.mp (Finset.mem_range.mp hi)
     rw [Polynomial.coeff_map, Polynomial.coeff_map, hPcoeff, if_pos him, RingHom.comp_apply,
       hDi him]
     simp only [d]
-    rw [mul_pow, ← mul_assoc, ← mul_assoc, toHahn_expand_single_scaling n q a (p.coeff i) i m]
+    rw [mul_pow, ← mul_assoc, ← mul_assoc, toHahnSeries_expand_single_scaling n q a (p.coeff i) i m]
 
-/-! ## The descent step and the main induction -/
+/-! ## The descent step -/
 
-/-- **Newton–Puiseux descent**: for `p'` monic of degree `m` over `K((t))` with vanishing
+/-- For `p'` monic of degree `m` over `K((t))` with vanishing
 subleading coefficient and some nonzero lower coefficient (`K` algebraically closed,
-characteristic zero), there are `q ≥ 1`, an element `τ` in the range of `toHahn K (n * q)`,
-and a monic `g` with `1 ≤ deg g < m` such that every root `y` of `g.map (toHahn K (n * q))`
-gives the root `τ * y` of `p'.map (toHahn K n)`. -/
+characteristic zero), there are `q ≥ 1`, an element `τ` in the range of `toHahnSeries K (n * q)`,
+and a monic `g` with `1 ≤ deg g < m` such that every root `y` of `g.map (toHahnSeries K (n * q))`
+gives the root `τ * y` of `p'.map (toHahnSeries K n)`. -/
 private theorem newton_puiseux_descent [IsAlgClosed K] [CharZero K] (n : ℕ+)
     {p' : Polynomial (LaurentSeries K)} {m : ℕ}
     (hp : p'.Monic) (hm : p'.natDegree = m) (hsub : p'.coeff (m - 1) = 0)
     (hex : ∃ i < m, p'.coeff i ≠ 0) :
     ∃ (q : ℕ+) (τ : HahnSeries ℚ K) (g : Polynomial (LaurentSeries K)),
-      τ ∈ (toHahn K (n * q)).fieldRange ∧ g.Monic ∧
+      τ ∈ (toHahnSeries K (n * q)).fieldRange ∧ g.Monic ∧
       1 ≤ g.natDegree ∧ g.natDegree < m ∧
       ∀ y : HahnSeries ℚ K,
-        (g.map (toHahn K (n * q))).eval y = 0 →
-        (p'.map (toHahn K n)).eval (τ * y) = 0 := by
+        (g.map (toHahnSeries K (n * q))).eval y = 0 →
+        (p'.map (toHahnSeries K n)).eval (τ * y) = 0 := by
   obtain ⟨q, a, P, hPm, hPdeg, hRsub, hRex, hev⟩ := newton_slope_scaling n hp hm hsub hex
   set R := P.map (PowerSeries.constantCoeff (R := K))
   have hRmonic : R.Monic := hPm.map _
   have hRdeg : R.natDegree = m := by rw [hPm.natDegree_map, hPdeg]
   have hRne : R ≠ X ^ m :=
-    hRex.elim fun i₀ ⟨hi₀, hne⟩ h => by simp [h, Polynomial.coeff_X_pow, hi₀.ne] at hne
+    hRex.elim fun i₀ ⟨hi₀, hne⟩ h ↦ by simp [h, Polynomial.coeff_X_pow, hi₀.ne] at hne
   obtain ⟨a₀, hk0, hkm⟩ := hRmonic.exists_rootMultiplicity_pos_lt hRdeg
-    (Nat.cast_ne_zero.mpr (hex.elim fun _ ⟨hi, _⟩ => (Nat.zero_lt_of_lt hi).ne')) hRsub hRne
+    (Nat.cast_ne_zero.mpr (hex.elim fun _ ⟨hi, _⟩ ↦ (Nat.zero_lt_of_lt hi).ne')) hRsub hRne
   obtain ⟨G, h, hG, hh, hPeq, hGdeg, -⟩ :=
     hPm.exists_factorization_rootMultiplicity (a := a₀) hPdeg rfl
   refine ⟨q, HahnSeries.single ((a : ℚ) / ((n * q : ℕ+) : ℚ)) 1,
-    G.map (HahnSeries.ofPowerSeries ℤ K), ⟨HahnSeries.single a 1, by rw [toHahn_single]⟩,
+    G.map (HahnSeries.ofPowerSeries ℤ K), ⟨HahnSeries.single a 1, by rw [toHahnSeries_single]⟩,
     hG.map _, ?_, ?_, ?_⟩
   · rw [hG.natDegree_map, hGdeg]; exact hk0
   · rw [hG.natDegree_map, hGdeg]; exact hkm
@@ -284,18 +284,20 @@ open LaurentSeries
 
 variable {K : Type*} [Field K]
 
+/-! ## The Newton–Puiseux induction -/
+
 /-- The Newton–Puiseux induction, in the form suitable for strong induction on the degree:
 the statement is quantified over all indices `n`, since the descent step re-enters at a finer
 index. -/
 private theorem exists_root_mem_subfield_aux [IsAlgClosed K] [CharZero K] :
     ∀ m : ℕ, ∀ (n : ℕ+) (p : Polynomial (LaurentSeries K)), p.Monic → p.natDegree = m →
-      1 ≤ m → ∃ x ∈ PuiseuxSeries.subfield K, (p.map (toHahn K n)).eval x = 0 := by
+      1 ≤ m → ∃ x ∈ PuiseuxSeries.subfield K, (p.map (toHahnSeries K n)).eval x = 0 := by
   intro m
   induction m using Nat.strong_induction_on with
   | _ m ih =>
   intro n p hp hm hm1
   have hmF : (m : LaurentSeries K) ≠ 0 :=
-    mt (fun h => HahnSeries.single_eq_zero_iff.mp
+    mt (fun h ↦ HahnSeries.single_eq_zero_iff.mp
         ((map_natCast (HahnSeries.C : K →+* LaurentSeries K) m).symm.trans h))
       (Nat.cast_ne_zero.mpr (Nat.ne_zero_of_lt hm1) : (m : K) ≠ 0)
   set b : LaurentSeries K := -p.coeff (m - 1) / (m : LaurentSeries K)
@@ -303,15 +305,15 @@ private theorem exists_root_mem_subfield_aux [IsAlgClosed K] [CharZero K] :
   have hp'm : p'.Monic := hp.comp_X_add_C b
   have hp'deg : p'.natDegree = m := by rw [hp'def, ← taylor_apply, natDegree_taylor, hm]
   have hp'sub : p'.coeff (m - 1) = 0 := hp.tschirnhausen hm hmF
-  have key : ∃ y ∈ PuiseuxSeries.subfield K, (p'.map (toHahn K n)).eval y = 0 := by
+  have key : ∃ y ∈ PuiseuxSeries.subfield K, (p'.map (toHahnSeries K n)).eval y = 0 := by
     by_cases hex : ∃ i < m, p'.coeff i ≠ 0
     · obtain ⟨q, τ, g, hτ, hg, hg1, hgm, htrans⟩ :=
         newton_puiseux_descent n hp'm hp'deg hp'sub hex
       obtain ⟨y, hy, hy0⟩ := ih g.natDegree hgm (n * q) g hg rfl hg1
       exact ⟨τ * y, mul_mem ((PuiseuxSeries.mem_subfield_iff K).mpr ⟨n * q, hτ⟩) hy,
         htrans y hy0⟩
-    · have hall : ∀ i < m, p'.coeff i = 0 := fun i hi => by_contra fun hne => hex ⟨i, hi, hne⟩
-      have hXm : p' = X ^ m := Polynomial.ext fun i => by
+    · have hall : ∀ i < m, p'.coeff i = 0 := fun i hi ↦ by_contra fun hne ↦ hex ⟨i, hi, hne⟩
+      have hXm : p' = X ^ m := Polynomial.ext fun i ↦ by
         rcases lt_trichotomy i m with hi | rfl | hi
         · simp [hall i hi, Polynomial.coeff_X_pow, hi.ne]
         · simpa [Polynomial.leadingCoeff, hp'deg] using hp'm.leadingCoeff
@@ -319,22 +321,22 @@ private theorem exists_root_mem_subfield_aux [IsAlgClosed K] [CharZero K] :
             if_neg hi.ne']
       exact ⟨0, zero_mem _, by simp [hXm, Polynomial.map_pow, zero_pow (Nat.ne_zero_of_lt hm1)]⟩
   obtain ⟨y, hy, hy0⟩ := key
-  refine ⟨y + toHahn K n b, add_mem hy ((PuiseuxSeries.mem_subfield_iff K).mpr ⟨n, b, rfl⟩), ?_⟩
+  refine ⟨y + toHahnSeries K n b,
+    add_mem hy ((PuiseuxSeries.mem_subfield_iff K).mpr ⟨n, b, rfl⟩), ?_⟩
   simpa [hp'def, Polynomial.map_comp, Polynomial.eval_comp] using hy0
 
-/-- **Puiseux root of a monic polynomial** (the Newton–Puiseux induction): for `K` algebraically
-closed of characteristic zero, every monic `p` over `K((t))` of positive degree, mapped along
-any embedding `toHahn K n`, has a root in the Puiseux subfield. -/
+/-- For `K` algebraically closed of characteristic zero, every monic polynomial over `K((t))`
+of positive degree, mapped along any embedding `toHahnSeries K n`, has a root in the Puiseux
+subfield. -/
 theorem exists_root_mem_subfield [IsAlgClosed K] [CharZero K] (n : ℕ+)
     {p : Polynomial (LaurentSeries K)} (hp : p.Monic) (hdeg : 1 ≤ p.natDegree) :
-    ∃ x ∈ PuiseuxSeries.subfield K, (p.map (toHahn K n)).eval x = 0 :=
+    ∃ x ∈ PuiseuxSeries.subfield K, (p.map (toHahnSeries K n)).eval x = 0 :=
   exists_root_mem_subfield_aux p.natDegree n p hp rfl hdeg
 
 /-! ## Main results -/
 
-/-- **Puiseux series are algebraically closed**: for `K` an algebraically closed field of
-characteristic zero, the field of Puiseux series over `K` is algebraically closed. This is the
-analytic half of **Puiseux's theorem**, proved by the Newton–Puiseux algorithm. -/
+/-- For `K` an algebraically closed field of characteristic zero, the field of Puiseux series
+over `K` is algebraically closed. -/
 instance isAlgClosed (K : Type*) [Field K] [IsAlgClosed K] [CharZero K] :
     IsAlgClosed (PuiseuxSeries K) := by
   apply IsAlgClosed.of_exists_root
@@ -344,12 +346,12 @@ instance isAlgClosed (K : Type*) [Field K] [IsAlgClosed K] [CharZero K] :
   have hιinj : Function.Injective ι := Subtype.val_injective
   obtain ⟨N, hN⟩ :=
     PuiseuxSeries.exists_common_index K
-      ((Finset.range (r.natDegree + 1)).image fun i => (r.map ι).coeff i)
-      (fun x hx => by
+      ((Finset.range (r.natDegree + 1)).image fun i ↦ (r.map ι).coeff i)
+      (fun x hx ↦ by
         obtain ⟨i, -, rfl⟩ := Finset.mem_image.mp hx
         rw [Polynomial.coeff_map]
         exact (r.coeff i).2)
-  have hrange : ∀ i, (r.map ι).coeff i ∈ Set.range (LaurentSeries.toHahn K N) := by
+  have hrange : ∀ i, (r.map ι).coeff i ∈ Set.range (LaurentSeries.toHahnSeries K N) := by
     intro i
     by_cases hi : i ≤ r.natDegree
     · exact Set.mem_range.mpr
@@ -369,8 +371,7 @@ instance isAlgClosed (K : Type*) [Field K] [IsAlgClosed K] [CharZero K] :
 
 /-- **Puiseux's theorem**: for `K` an algebraically closed field of characteristic zero, the
 Puiseux series field `⋃ n, K((t ^ (1 / n)))` is an algebraic closure of the Laurent series
-field `K((t))`. Algebraicity holds over any field (`PuiseuxSeries.isAlgebraic`); algebraic
-closedness is the Newton–Puiseux algorithm (`PuiseuxSeries.isAlgClosed`). -/
+field `K((t))`. -/
 instance isAlgClosure (K : Type*) [Field K] [IsAlgClosed K] [CharZero K] :
     IsAlgClosure (LaurentSeries K) (PuiseuxSeries K) :=
   ⟨inferInstance, inferInstance⟩
