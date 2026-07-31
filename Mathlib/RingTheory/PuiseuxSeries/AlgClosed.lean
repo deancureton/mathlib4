@@ -60,9 +60,10 @@ open Polynomial
 
 /-! ## Auxiliary polynomial lemmas
 
-Two generic lemmas over a field: the Tschirnhausen substitution killing the subleading
-coefficient, and the existence of a root of intermediate multiplicity for a monic polynomial
-with vanishing subleading coefficient which is not a pure power of `X`.
+Two lemmas over a field, private to the Newton–Puiseux induction: the Tschirnhausen
+substitution killing the subleading coefficient, and the existence of a root of intermediate
+multiplicity for a monic polynomial with vanishing subleading coefficient which is not a pure
+power of `X`.
 -/
 
 namespace Polynomial
@@ -71,7 +72,7 @@ namespace Polynomial
 `(m : F) ≠ 0`, substituting `X + C (-p.coeff (m - 1) / m)` for the variable kills the
 coefficient of degree `m - 1`. (Monicity and the degree are preserved by
 `Polynomial.Monic.comp_X_add_C` and `Polynomial.natDegree_taylor`.) -/
-theorem Monic.tschirnhausen {F : Type*} [Field F] {p : F[X]} {m : ℕ} (hp : p.Monic)
+private theorem Monic.tschirnhausen {F : Type*} [Field F] {p : F[X]} {m : ℕ} (hp : p.Monic)
     (hm : p.natDegree = m) (hmF : (m : F) ≠ 0) :
     (p.comp (X + C (-p.coeff (m - 1) / (m : F)))).coeff (m - 1) = 0 := by
   have hm0 : m ≠ 0 := by rintro rfl; simp at hmF
@@ -91,7 +92,7 @@ theorem Monic.tschirnhausen {F : Type*} [Field F] {p : F[X]} {m : ℕ} (hp : p.M
 /-- **A monic non-power has a mixed root**: over an algebraically closed field, a monic `r` of
 degree `m` with `(m : K) ≠ 0`, vanishing coefficient of degree `m - 1`, and `r ≠ X ^ m` has a
 root of multiplicity strictly between `0` and `m`. -/
-theorem Monic.exists_rootMultiplicity_pos_lt {K : Type*} [Field K] [IsAlgClosed K]
+private theorem Monic.exists_rootMultiplicity_pos_lt {K : Type*} [Field K] [IsAlgClosed K]
     {r : K[X]} {m : ℕ} (hr : r.Monic) (hm : r.natDegree = m) (hmK : (m : K) ≠ 0)
     (hsub : r.coeff (m - 1) = 0) (hne : r ≠ X ^ m) :
     ∃ a : K, 0 < r.rootMultiplicity a ∧ r.rootMultiplicity a < m := by
@@ -129,7 +130,7 @@ variable {K : Type*} [Field K]
 /-- **Monomial scaling identity** (per-summand computation of the Newton rescaling): for
 `τ = single (a / (nq)) 1`,
 `τ ^ m * toHahn K (n * q) (expand K q c * single (a * (i - m)) 1) = toHahn K n c * τ ^ i`. -/
-theorem toHahn_expand_single_scaling (n q : ℕ+) (a : ℤ) (c : LaurentSeries K) (i m : ℕ) :
+private theorem toHahn_expand_single_scaling (n q : ℕ+) (a : ℤ) (c : LaurentSeries K) (i m : ℕ) :
     HahnSeries.single ((a : ℚ) / ((n * q : ℕ+) : ℚ)) (1 : K) ^ m *
         toHahn K (n * q) (expand K q c * HahnSeries.single (a * ((i : ℤ) - (m : ℤ))) 1)
       = toHahn K n c * HahnSeries.single ((a : ℚ) / ((n * q : ℕ+) : ℚ)) (1 : K) ^ i := by
