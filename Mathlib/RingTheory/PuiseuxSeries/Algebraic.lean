@@ -36,7 +36,7 @@ noncomputable section
 
 namespace PuiseuxSeries
 
-open LaurentSeries
+open LaurentSeries Polynomial
 
 variable (K : Type*) [Field K]
 
@@ -47,15 +47,11 @@ theorem isIntegral_single_one_div (n : ℕ+) :
       (HahnSeries.single ((1 : ℚ) / (n : ℕ)) (1 : K)) := by
   have hpow : (HahnSeries.single ((1 : ℚ) / (n : ℕ)) (1 : K)) ^ (n : ℕ)
       = HahnSeries.single (1 : ℚ) (1 : K) := by
-    simp_all only [one_div, HahnSeries.single_pow, nsmul_eq_mul, ne_eq, Nat.cast_eq_zero,
-      PNat.ne_zero, not_false_eq_true, mul_inv_cancel₀, one_pow]
-  have ht : LaurentSeries.toHahn K 1 (HahnSeries.single (1 : ℤ) (1 : K))
-      = HahnSeries.single (1 : ℚ) (1 : K) := by
-    rw [LaurentSeries.toHahn_single]
-    norm_num
-  refine ⟨Polynomial.X ^ (n : ℕ) - Polynomial.C ⟨HahnSeries.single (1 : ℚ) (1 : K),
-    ⟨HahnSeries.single (1 : ℤ) (1 : K), ht⟩⟩, Polynomial.monic_X_pow_sub_C _ n.ne_zero, ?_⟩
-  simp only [Polynomial.eval₂_sub, Polynomial.eval₂_X_pow, Polynomial.eval₂_C, hpow]
+    simp [HahnSeries.single_pow, one_div, nsmul_eq_mul, n.ne_zero]
+  refine ⟨X ^ (n : ℕ) - C ⟨HahnSeries.single (1 : ℚ) (1 : K),
+      ⟨HahnSeries.single (1 : ℤ) (1 : K), by simp [toHahn_single]⟩⟩,
+    monic_X_pow_sub_C _ n.ne_zero, ?_⟩
+  simp only [eval₂_sub, eval₂_X_pow, eval₂_C, hpow]
   exact sub_eq_zero.mpr rfl
 
 /-- Every element of the range of `LaurentSeries.toHahn K n` lies in the subalgebra of
@@ -67,117 +63,62 @@ theorem mem_adjoin_single_of_mem_fieldRange (n : ℕ+) {x : HahnSeries ℚ K}
       {HahnSeries.single ((1 : ℚ) / (n : ℕ)) (1 : K)} := by
   classical
   obtain ⟨f, rfl⟩ := hx
-  -- the support of `f` is bounded below
-  obtain ⟨b, hb⟩ : BddBelow f.support := by
-    rcases Set.eq_empty_or_nonempty f.support with h | h
-    · exact h ▸ bddBelow_empty
-    · exact ⟨f.isWF_support.min h, fun y hy => f.isWF_support.min_le h hy⟩
-  -- the `r`-th residue slice `g r` of `f`
+  obtain ⟨b, hb⟩ : BddBelow f.support :=
+    f.support.eq_empty_or_nonempty.elim (· ▸ bddBelow_empty)
+      fun h => ⟨_, fun _ hy => f.isWF_support.min_le h hy⟩
   have hg : ∀ r : ℤ, ∃ y : LaurentSeries K, ∀ k : ℤ, y.coeff k = f.coeff ((n : ℤ) * k + r) := by
     intro r
-    refine ⟨⟨fun k => f.coeff ((n : ℤ) * k + r), ?_⟩, fun _ => rfl⟩
-    rw [Set.isPWO_iff_isWF]
-    refine BddBelow.isWF ⟨min 0 (b - r), fun k hk => ?_⟩
-    have hk' : b ≤ (n : ℤ) * k + r := hb hk
-    rcases le_or_gt 0 k with h0 | h0
-    · exact inf_le_of_left_le h0
-    · have hn1 : (0 : ℤ) < (n : ℤ) := by exact_mod_cast n.pos
-      have : (n : ℤ) * k ≤ k := by nlinarith
-      exact le_trans (min_le_right _ _) (by linarith)
+    refine ⟨⟨fun k => f.coeff ((n : ℤ) * k + r),
+        (BddBelow.isWF ⟨min 0 (b - r), fun k hk => ?_⟩).isPWO⟩, fun _ => rfl⟩
+    exact min_le_iff.mpr <| (le_or_gt 0 k).imp id fun h0 => by nlinarith [hb hk, n.pos]
   choose g hgc using hg
-  have hexp1 : ∀ (y : LaurentSeries K) (k : ℤ), (expand K n y).coeff ((n : ℤ) * k)
-      = y.coeff k := fun y k => HahnSeries.embDomain_coeff
-  have hexp0 : ∀ (y : LaurentSeries K) (j : ℤ), (¬ ∃ k : ℤ, (n : ℤ) * k = j) →
-      (expand K n y).coeff j = 0 := fun y j hj => HahnSeries.embDomain_of_notMem_range hj
-  -- the Laurent-level residue decomposition of `f`
+  have hexp1 (y : LaurentSeries K) (k : ℤ) : (expand K n y).coeff ((n : ℤ) * k) = y.coeff k :=
+    HahnSeries.embDomain_coeff
+  have hexp0 (y : LaurentSeries K) {j : ℤ} (hj : ¬∃ k : ℤ, (n : ℤ) * k = j) :
+      (expand K n y).coeff j = 0 := HahnSeries.embDomain_of_notMem_range hj
   have hf : f = ∑ r ∈ Finset.range (n : ℕ),
       HahnSeries.single (r : ℤ) (1 : K) * expand K n (g r) := by
     ext j
     rw [HahnSeries.coeff_sum]
     have hn0 : (0 : ℤ) < (n : ℤ) := by exact_mod_cast n.pos
-    set r₀ : ℕ := (j % (n : ℤ)).toNat with hr₀
-    have hr₀lt : r₀ < (n : ℕ) := by
-      have := Int.emod_lt_of_pos j hn0
-      have h2 := Int.emod_nonneg j (ne_of_gt hn0)
-      exact (Int.toNat_lt h2).mpr this
-    have hr₀cast : ((r₀ : ℤ)) = j % (n : ℤ) := by
-      have h2 := Int.emod_nonneg j (ne_of_gt hn0)
-      exact Int.toNat_of_nonneg h2
-    have hdm := Int.mul_ediv_add_emod j (n : ℤ)
+    set r₀ : ℕ := (j % (n : ℤ)).toNat
+    have hnonneg := Int.emod_nonneg j (ne_of_gt hn0)
+    have hr₀lt : r₀ < (n : ℕ) := (Int.toNat_lt hnonneg).mpr (Int.emod_lt_of_pos j hn0)
+    have hr₀cast : (r₀ : ℤ) = j % (n : ℤ) := Int.toNat_of_nonneg hnonneg
     rw [Finset.sum_eq_single_of_mem r₀ (Finset.mem_range.mpr hr₀lt) ?_]
-    · rw [HahnSeries.coeff_single_mul, one_mul, hr₀cast,
-        show j - j % (n : ℤ) = (n : ℤ) * (j / (n : ℤ)) from
-          Eq.symm (Int.mul_ediv_self j ((n : ℕ) : ℤ)),
-        hexp1, hgc]
-      congr 1
-      omega
+    · have hdiv : j - j % (n : ℤ) = (n : ℤ) * (j / (n : ℤ)) := by
+        linarith [Int.mul_ediv_add_emod j (n : ℤ)]
+      rw [HahnSeries.coeff_single_mul, one_mul, hr₀cast, hdiv, hexp1, hgc]
+      exact congrArg _ (by omega)
     · intro r hr hne
-      have hnd : ¬ ∃ k : ℤ, (n : ℤ) * k = j - (r : ℤ) := by
+      have hnd : ¬∃ k : ℤ, (n : ℤ) * k = j - (r : ℤ) := by
         rintro ⟨k, hk⟩
         have hrlt : (r : ℤ) < (n : ℤ) := by exact_mod_cast Finset.mem_range.mp hr
-        have hne' : (r : ℤ) ≠ (r₀ : ℤ) := by exact_mod_cast hne
-        have h2 := Int.emod_nonneg j (ne_of_gt hn0)
-        have h3 := Int.emod_lt_of_pos j hn0
-        rw [hr₀cast] at hne'
-        have hd : j % (n : ℤ) - (r : ℤ) = (n : ℤ) * (k - j / (n : ℤ)) := by
-          rw [mul_sub]; linarith
-        have hzero : k - j / (n : ℤ) = 0 := by
-          rcases lt_trichotomy (k - j / (n : ℤ)) 0 with h | h | h
-          · nlinarith
-          · exact h
-          · nlinarith
-        rw [hzero, mul_zero] at hd
-        omega
-      rw [HahnSeries.coeff_single_mul, hexp0 _ _ hnd, mul_zero]
-  -- transport the decomposition through `toHahn K n`
+        refine hne (Nat.cast_injective (R := ℤ) ?_)
+        rw [hr₀cast, show j = (n : ℤ) * k + r by omega, Int.mul_add_emod_self_left,
+          Int.emod_eq_of_lt (Nat.cast_nonneg _) hrlt]
+      rw [HahnSeries.coeff_single_mul, hexp0 _ hnd, mul_zero]
   rw [hf, map_sum]
-  refine Subalgebra.sum_mem _ fun r hr => ?_
-  rw [map_mul]
-  have h1 : LaurentSeries.toHahn K n (HahnSeries.single (r : ℤ) (1 : K))
+  refine Subalgebra.sum_mem _ fun r _ => ?_
+  have h1 : toHahn K n (HahnSeries.single (r : ℤ) (1 : K))
       = HahnSeries.single ((1 : ℚ) / (n : ℕ)) (1 : K) ^ r := by
-    rw [HahnSeries.single_pow, one_pow]
-    rw [LaurentSeries.toHahn_single]
-    exact congrArg (fun c => HahnSeries.single c (1 : K)) (by rw [nsmul_eq_mul]; push_cast; ring)
-  have h2 : LaurentSeries.toHahn K n (expand K n (g r))
-      ∈ (LaurentSeries.toHahn K 1).fieldRange := by
-    refine ⟨g r, ?_⟩
-    have hc := LaurentSeries.toHahn_comp_expand K 1 n
-    rw [one_mul] at hc
-    exact (congrFun (congrArg (fun φ : LaurentSeries K →+* HahnSeries ℚ K => (φ : _ → _)) hc)
-      (g r)).symm
-  rw [h1]
+    rw [HahnSeries.single_pow, one_pow, toHahn_single, nsmul_eq_mul, mul_one_div,
+      Int.cast_natCast]
+  have h2 : toHahn K n (expand K n (g r)) ∈ (toHahn K 1).fieldRange :=
+    ⟨g r, by simpa [one_mul] using (DFunLike.congr_fun (toHahn_comp_expand K 1 n) (g r)).symm⟩
+  rw [map_mul, h1]
   exact mul_mem (Subalgebra.pow_mem _ (Algebra.self_mem_adjoin_singleton _ _) _)
-    (Subalgebra.algebraMap_mem _ (⟨_, h2⟩ : (LaurentSeries.toHahn K 1).fieldRange))
+    (Subalgebra.algebraMap_mem _ (⟨_, h2⟩ : (toHahn K 1).fieldRange))
 
 /-- **Puiseux series are algebraic over Laurent series**, for any field `K`. -/
-instance isAlgebraic : Algebra.IsAlgebraic (LaurentSeries K) (PuiseuxSeries K) := by
-  constructor
-  intro x
-  let v : PuiseuxSeries K →+* HahnSeries ℚ K := (PuiseuxSeries.subfield K).subtype
-  have hx : v x ∈ PuiseuxSeries.subfield K := Subtype.property x
-  obtain ⟨n, hn⟩ := (PuiseuxSeries.mem_subfield_iff K).mp hx
-  -- `x` is integral over the range of `toHahn K 1`
-  have hint : IsIntegral (LaurentSeries.toHahn K 1).fieldRange (v x) :=
-    IsIntegral.of_mem_of_fg _ (isIntegral_single_one_div K n).fg_adjoin_singleton _
-      (mem_adjoin_single_of_mem_fieldRange K n hn)
-  -- `toHahn K 1` is a ring isomorphism onto its range
-  let φ' : LaurentSeries K →+* ↥(LaurentSeries.toHahn K 1).fieldRange :=
-    (LaurentSeries.toHahn K 1).codRestrict (LaurentSeries.toHahn K 1).fieldRange.toSubring
-      fun y => RingHom.mem_fieldRange_self _ y
-  have hbij : Function.Bijective φ' :=
-    ⟨fun a b h => (LaurentSeries.toHahn K 1).injective (congrArg Subtype.val h),
-      fun ⟨_, a, rfl⟩ => ⟨a, rfl⟩⟩
-  let e : LaurentSeries K ≃+* ↥(LaurentSeries.toHahn K 1).fieldRange :=
-    RingEquiv.ofBijective φ' hbij
-  obtain ⟨p, hpm, hp0⟩ := hint
-  refine ⟨p.map (e.symm : _ →+* LaurentSeries K), (hpm.map _).ne_zero, ?_⟩
-  have hcomp : ((v.comp (algebraMap (LaurentSeries K) (PuiseuxSeries K))).comp
-        (e.symm : _ →+* LaurentSeries K))
-      = algebraMap (↥(LaurentSeries.toHahn K 1).fieldRange) (HahnSeries ℚ K) :=
-    RingHom.ext fun c => congrArg Subtype.val (e.apply_symm_apply c)
-  have hvinj : Function.Injective v := fun a b h => Subtype.ext h
-  apply hvinj
-  rw [map_zero, Polynomial.aeval_def, Polynomial.hom_eval₂, Polynomial.eval₂_map, hcomp]
-  exact hp0
+instance isAlgebraic : Algebra.IsAlgebraic (LaurentSeries K) (PuiseuxSeries K) where
+  isAlgebraic x := by
+    let v : PuiseuxSeries K →+* HahnSeries ℚ K := (subfield K).subtype
+    obtain ⟨n, hn⟩ := (mem_subfield_iff K).mp x.property
+    exact (IsIntegral.isAlgebraic <|
+        .of_mem_of_fg _ (isIntegral_single_one_div K n).fg_adjoin_singleton _
+          (mem_adjoin_single_of_mem_fieldRange K n hn)).of_ringHom_of_comp_eq
+      (toHahn K 1).rangeRestrictFieldEquiv v (EquivLike.surjective _) Subtype.val_injective
+      (by ext; rfl)
 
 end PuiseuxSeries

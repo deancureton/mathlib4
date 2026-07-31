@@ -500,15 +500,12 @@ theorem embDomain_embDomain {Γ'' : Type*} [PartialOrder Γ''] (f : Γ ↪o Γ')
   ext b
   by_cases hb : b ∈ Set.range (f.trans g)
   · obtain ⟨a, rfl⟩ := hb
-    rw [embDomain_coeff, show (f.trans g) a = g (f a) from rfl, embDomain_coeff,
-      embDomain_coeff]
+    rw [embDomain_coeff, RelEmbedding.trans_apply, embDomain_coeff, embDomain_coeff]
   · rw [embDomain_of_notMem_range hb]
     by_cases hb' : b ∈ Set.range g
     · obtain ⟨c, rfl⟩ := hb'
-      rw [embDomain_coeff, embDomain_of_notMem_range]
-      intro ⟨a, ha⟩
-      exact hb ⟨a, by simp [ha]⟩
-    · rw [embDomain_of_notMem_range hb']
+      rw [embDomain_coeff, embDomain_of_notMem_range fun ⟨a, ha⟩ => hb ⟨a, by simp [ha]⟩]
+    · exact embDomain_of_notMem_range hb'
 
 theorem embDomain_injective {f : Γ ↪o Γ'} :
     Function.Injective (embDomain f : R⟦Γ⟧ → R⟦Γ'⟧) := fun x y xy => by

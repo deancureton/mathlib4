@@ -53,26 +53,17 @@ variable (K : Type*) [Field K]
 /-- The expansion ring embedding `K((t)) →+* K((t))`, `t ↦ t ^ m`:
 `embDomainRingHom` along the exponent map `k ↦ m * k` on `ℤ`. -/
 def expand (m : ℕ+) : LaurentSeries K →+* LaurentSeries K :=
-  HahnSeries.embDomainRingHom
-    (⟨⟨fun k => (m : ℤ) * k, mul_zero _⟩, fun _ _ => mul_add _ _ _⟩ : ℤ →+ ℤ)
-    (fun _ _ h => by
-      exact mul_left_cancel₀ (by exact_mod_cast m.ne_zero) h)
-    (fun _ _ => mul_le_mul_iff_right₀ (by exact_mod_cast m.pos))
+  HahnSeries.embDomainRingHom (AddMonoidHom.mk' ((m : ℤ) * ·) (mul_add _))
+    (fun _ _ => mul_left_cancel₀ (by exact_mod_cast m.ne_zero))
+    fun _ _ => mul_le_mul_iff_right₀ (by exact_mod_cast m.pos)
 
 /-- The embedding `K((t)) →+* HahnSeries ℚ K`, "`t ↦ t ^ (1 / n)`":
 `embDomainRingHom` along the exponent map `k ↦ k / n : ℤ → ℚ`. -/
 def toHahn (n : ℕ+) : LaurentSeries K →+* HahnSeries ℚ K :=
   HahnSeries.embDomainRingHom
     (AddMonoidHom.mk' (fun k : ℤ => (k : ℚ) / (n : ℕ)) fun a b => by push_cast; ring)
-    (fun a b h => by
-      have h' : (a : ℚ) / (n : ℕ) = (b : ℚ) / (n : ℕ) := h
-      have hn : ((n : ℕ) : ℚ) ≠ 0 := by exact_mod_cast n.ne_zero
-      field_simp at h'
-      exact_mod_cast h')
-    (fun a b => by
-      simp only [AddMonoidHom.mk'_apply]
-      rw [div_le_div_iff_of_pos_right (by exact_mod_cast n.pos : (0 : ℚ) < (n : ℕ))]
-      exact Int.cast_le)
+    (fun _ _ h => Int.cast_injective ((div_left_inj' (Nat.cast_ne_zero.mpr n.ne_zero)).mp h))
+    fun _ _ => (div_le_div_iff_of_pos_right (Nat.cast_pos.mpr n.pos)).trans Int.cast_le
 
 @[simp]
 theorem toHahn_single (n : ℕ+) (k : ℤ) (a : K) :
@@ -84,30 +75,23 @@ by `m` and then mapping `t ↦ t ^ (1 / (n * m))` is mapping `t ↦ t ^ (1 / n)`
 theorem toHahn_comp_expand (n m : ℕ+) :
     (toHahn K (n * m)).comp (expand K m) = toHahn K n :=
   RingHom.ext fun f => by
-    simp only [RingHom.comp_apply, toHahn, expand, HahnSeries.embDomainRingHom_apply,
-      HahnSeries.embDomain_embDomain]
+    change HahnSeries.embDomain _ (HahnSeries.embDomain _ f) = HahnSeries.embDomain _ f
+    rw [HahnSeries.embDomain_embDomain]
     congr 1
     ext k
-    simp only [RelEmbedding.trans_apply, RelEmbedding.coe_mk, Function.Embedding.coeFn_mk,
-      AddMonoidHom.mk'_apply, AddMonoidHom.coe_mk, ZeroHom.coe_mk]
-    push_cast
-    rw [mul_comm ((n : ℚ)) ((m : ℚ)), mul_div_mul_left _ _ (by exact_mod_cast m.ne_zero)]
+    simp [mul_comm ((n : ℚ)), mul_div_mul_left]
 
 /-- Range monotonicity: the range of `toHahn K n` is contained in the range of
 `toHahn K (n * m)`, as subfields of `HahnSeries ℚ K`. -/
 theorem fieldRange_toHahn_le (n m : ℕ+) :
-    (toHahn K n).fieldRange ≤ (toHahn K (n * m)).fieldRange := by
-  rintro x ⟨f, rfl⟩
-  exact ⟨expand K m f, by rw [← RingHom.comp_apply, toHahn_comp_expand]⟩
+    (toHahn K n).fieldRange ≤ (toHahn K (n * m)).fieldRange :=
+  fun _ ⟨f, hf⟩ => ⟨expand K m f, (DFunLike.congr_fun (toHahn_comp_expand K n m) f).trans hf⟩
 
 /-- The family `n ↦ (toHahn K n).fieldRange` is directed: the ranges of `toHahn K a` and
 `toHahn K b` both sit inside the range of `toHahn K (a * b)`. -/
 theorem directed_fieldRange_toHahn :
-    Directed (· ≤ ·) fun n : ℕ+ => (toHahn K n).fieldRange := by
-  intro a b
-  refine ⟨a * b, fieldRange_toHahn_le K a b, ?_⟩
-  rw [mul_comm]
-  exact fieldRange_toHahn_le K b a
+    Directed (· ≤ ·) fun n : ℕ+ => (toHahn K n).fieldRange := fun a b =>
+  ⟨a * b, fieldRange_toHahn_le K a b, mul_comm b a ▸ fieldRange_toHahn_le K b a⟩
 
 end LaurentSeries
 
@@ -135,70 +119,36 @@ description of Puiseux series. -/
 theorem mem_subfield_iff_support {x : HahnSeries ℚ K} :
     x ∈ subfield K ↔
       ∃ n : ℕ+, ∀ q ∈ x.support, ∃ k : ℤ, q = (k : ℚ) / (n : ℚ) := by
-  classical
-  -- the two coefficient facts about `toHahn K n`, obtained by unfolding it as an `embDomain`
-  have key : ∀ (n : ℕ+) (f : LaurentSeries K),
-      (∀ k : ℤ, ((toHahn K n) f).coeff ((k : ℚ) / (n : ℚ)) = f.coeff k) ∧
-        (∀ q : ℚ, (¬ ∃ k : ℤ, q = (k : ℚ) / (n : ℚ)) → ((toHahn K n) f).coeff q = 0) := by
-    intro n f
-    obtain ⟨E, hEapp, hE⟩ : ∃ E : ℤ ↪o ℚ, (∀ k : ℤ, E k = (k : ℚ) / (n : ℚ)) ∧
-        (toHahn K n) f = HahnSeries.embDomain E f := by
-      refine ⟨⟨⟨fun k => (k : ℚ) / (n : ℕ), fun a b h => ?_⟩, fun {a b} => ?_⟩,
-        fun _ => rfl, ?_⟩
-      · have hn : ((n : ℕ) : ℚ) ≠ 0 := by exact_mod_cast n.ne_zero
-        field_simp at h
-        exact_mod_cast h
-      · simp only [Function.Embedding.coeFn_mk]
-        rw [div_le_div_iff_of_pos_right (by exact_mod_cast n.pos : (0 : ℚ) < (n : ℕ))]
-        exact Int.cast_le
-      · rfl
-    refine ⟨fun k => by rw [hE, ← hEapp k, HahnSeries.embDomain_coeff], fun q hq => ?_⟩
-    rw [hE]
-    exact HahnSeries.embDomain_of_notMem_range fun ⟨k, hk⟩ => hq ⟨k, by rw [← hk, hEapp]⟩
+  -- the key coefficient fact about `toHahn K n`, which is an `embDomain` by definition
+  have key₂ : ∀ (n : ℕ+) (f : LaurentSeries K) (q : ℚ),
+      (¬ ∃ k : ℤ, q = (k : ℚ) / (n : ℚ)) → ((toHahn K n) f).coeff q = 0 := fun n f q hq =>
+    HahnSeries.embDomain_of_notMem_range fun ⟨k, hk⟩ => hq ⟨k, hk.symm⟩
   rw [mem_subfield_iff]
   constructor
   · rintro ⟨n, f, rfl⟩
-    refine ⟨n, fun q hq => ?_⟩
-    by_contra hcon
-    exact hq ((key n f).2 q hcon)
+    exact ⟨n, fun q => Not.imp_symm (key₂ n f q)⟩
   · rintro ⟨n, hn⟩
-    have hn0 : (0 : ℚ) < (n : ℚ) := by exact_mod_cast n.pos
     refine ⟨n, ?_⟩
     rcases Set.eq_empty_or_nonempty x.support with hs | hs
     · exact ⟨0, (map_zero _).trans (HahnSeries.support_eq_empty_iff.mp hs).symm⟩
     -- the minimum of the support gives an integer lower bound for the support of `f`
-    set q₀ : ℚ := x.isWF_support.min hs
-    have hbdd : ∀ k : ℤ, x.coeff ((k : ℚ) / (n : ℚ)) ≠ 0 → ⌈(n : ℚ) * q₀⌉ ≤ k := by
-      intro k hk
-      refine Int.ceil_le.mpr ?_
-      rw [mul_comm]
-      exact (le_div_iff₀ hn0).mp (x.isWF_support.min_le hs hk)
     refine ⟨⟨fun k => x.coeff ((k : ℚ) / (n : ℚ)), ?_⟩, ?_⟩
-    · rw [Set.isPWO_iff_isWF]
-      exact BddBelow.isWF ⟨⌈(n : ℚ) * q₀⌉, hbdd⟩
+    · exact (BddBelow.isWF ⟨⌈(n : ℚ) * x.isWF_support.min hs⌉, fun k hk => Int.ceil_le.mpr
+        ((le_div_iff₀' (by exact_mod_cast n.pos)).mp (x.isWF_support.min_le hs hk))⟩).isPWO
     · ext q
       by_cases hq : ∃ k : ℤ, q = (k : ℚ) / (n : ℚ)
       · obtain ⟨k, rfl⟩ := hq
-        exact (key n _).1 k
-      · rw [(key n _).2 q hq]
-        by_contra hc
-        exact hq (hn q (Ne.symm hc))
+        exact HahnSeries.embDomain_coeff
+      · exact (key₂ n _ q hq).trans (of_not_not (mt (hn q) hq)).symm
 
 /-- Common index: a finite set of elements of the Puiseux subfield lies in the
 range of a single `toHahn K N`. -/
 theorem exists_common_index (s : Finset (HahnSeries ℚ K))
     (hs : ∀ x ∈ s, x ∈ subfield K) :
     ∃ N : ℕ+, ∀ x ∈ s, x ∈ (toHahn K N).fieldRange := by
-  classical
-  induction s using Finset.induction_on with
-  | empty => exact ⟨1, by simp⟩
-  | insert a s ha ih =>
-      obtain ⟨N₀, hN₀⟩ := ih fun x hx => hs x (Finset.mem_insert_of_mem hx)
-      obtain ⟨n, hn⟩ := (mem_subfield_iff K).mp (hs a (Finset.mem_insert_self a s))
-      refine ⟨n * N₀, fun x hx => ?_⟩
-      rcases Finset.mem_insert.mp hx with rfl | hx
-      · exact fieldRange_toHahn_le K n N₀ hn
-      · exact (mul_comm n N₀ ▸ fieldRange_toHahn_le K N₀ n) (hN₀ x hx)
+  choose! n hn using fun x (hx : x ∈ s) => (mem_subfield_iff K).mp (hs x hx)
+  obtain ⟨N, hN⟩ := (directed_fieldRange_toHahn K).finset_le (s.image n)
+  exact ⟨N, fun x hx => hN (n x) (Finset.mem_image_of_mem n hx) (hn x hx)⟩
 
 end PuiseuxSeries
 
@@ -218,10 +168,7 @@ instance : Field (PuiseuxSeries K) :=
 Puiseux subfield. This fixes the embedding of `K((t))` into the Puiseux series. -/
 instance algebraLaurentSeries : Algebra (LaurentSeries K) (PuiseuxSeries K) :=
   RingHom.toAlgebra <|
-    ((LaurentSeries.toHahn K 1).codRestrict (subfield K).toSubring fun x =>
-        SetLike.le_def.mp
-          (le_iSup (fun n : ℕ+ => (LaurentSeries.toHahn K n).fieldRange) 1)
-          (RingHom.mem_fieldRange_self _ x) :
-      LaurentSeries K →+* ↥(subfield K))
+    (LaurentSeries.toHahn K 1).codRestrict (subfield K) fun x =>
+      (mem_subfield_iff K).mpr ⟨1, RingHom.mem_fieldRange_self _ x⟩
 
 end PuiseuxSeries
