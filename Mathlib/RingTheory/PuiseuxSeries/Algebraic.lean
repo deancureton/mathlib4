@@ -86,8 +86,8 @@ theorem mem_adjoin_single_of_mem_fieldRange (n : ℕ+) {x : HahnSeries ℚ K}
     have hr₀lt : r₀ < (n : ℕ) := (Int.toNat_lt hnonneg).mpr (Int.emod_lt_of_pos j hn0)
     have hr₀cast : (r₀ : ℤ) = j % (n : ℤ) := Int.toNat_of_nonneg hnonneg
     rw [Finset.sum_eq_single_of_mem r₀ (Finset.mem_range.mpr hr₀lt) ?_]
-    · have hdiv : j - j % (n : ℤ) = (n : ℤ) * (j / (n : ℤ)) := by
-        linarith [Int.mul_ediv_add_emod j (n : ℤ)]
+    · have hdiv : j - j % (n : ℤ) = (n : ℤ) * (j / (n : ℤ)) :=
+        (Int.mul_ediv_self j (n : ℤ)).symm
       rw [HahnSeries.coeff_single_mul, one_mul, hr₀cast, hdiv, hexp1, hgc]
       exact congrArg _ (by omega)
     · intro r hr hne
