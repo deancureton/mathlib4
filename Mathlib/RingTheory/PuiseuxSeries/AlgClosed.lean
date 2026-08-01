@@ -227,9 +227,9 @@ private theorem newton_slope_scaling (n : ℕ+) {p : Polynomial (LaurentSeries K
     simpa [Finset.mem_filter, Finset.mem_range] using hi₀S
   obtain ⟨q, hq⟩ : ∃ q : ℕ+, (q : ℕ) = m - i₀ := ⟨⟨m - i₀, Nat.zero_lt_sub_of_lt hi₀m⟩, rfl⟩
   set a : ℤ := (p.coeff i₀).order with ha
-  have hqZ : ((q : ℕ) : ℤ) = (m : ℤ) - (i₀ : ℤ) := by rw [hq]; omega
+  have hqZ : (q : ℤ) = (m : ℤ) - (i₀ : ℤ) := by rw [hq]; omega
   have key : ∀ i, i < m → p.coeff i ≠ 0 →
-      0 ≤ ((q : ℕ) : ℤ) * (p.coeff i).order + a * ((i : ℤ) - (m : ℤ)) := fun i him hci ↦ by
+      0 ≤ (q : ℤ) * (p.coeff i).order + a * ((i : ℤ) - (m : ℤ)) := fun i him hci ↦ by
     rw [hqZ]
     exact newton_slope_min_le hi₀m
       (fun j hj hcj ↦ hi₀min j (Finset.mem_filter.2 ⟨Finset.mem_range.2 hj, hcj⟩)) him hci
