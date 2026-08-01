@@ -49,7 +49,7 @@ theorem isIntegral_single_one_div (n : ℕ+) :
       HahnSeries.single (1 : ℚ) (1 : K) := by
     simp [HahnSeries.single_pow, one_div, nsmul_eq_mul, n.ne_zero]
   refine ⟨X ^ (n : ℕ) - C ⟨HahnSeries.single (1 : ℚ) (1 : K),
-      ⟨HahnSeries.single (1 : ℤ) (1 : K), by simp⟩⟩,
+      ⟨HahnSeries.single (1 : ℤ) (1 : K), by rw [LaurentSeries.toHahnSeries_single]; simp⟩⟩,
     monic_X_pow_sub_C _ n.ne_zero, ?_⟩
   simp only [eval₂_sub, eval₂_X_pow, eval₂_C, hpow]
   exact sub_eq_zero.mpr rfl
