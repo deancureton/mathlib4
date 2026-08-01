@@ -49,7 +49,7 @@ theorem isIntegral_single_one_div (n : ℕ+) :
       HahnSeries.single (1 : ℚ) (1 : K) := by
     simp [HahnSeries.single_pow, one_div, nsmul_eq_mul, n.ne_zero]
   refine ⟨X ^ (n : ℕ) - C ⟨HahnSeries.single (1 : ℚ) (1 : K),
-      ⟨HahnSeries.single (1 : ℤ) (1 : K), by simp [toHahnSeries_single]⟩⟩,
+      ⟨HahnSeries.single (1 : ℤ) (1 : K), by simp⟩⟩,
     monic_X_pow_sub_C _ n.ne_zero, ?_⟩
   simp only [eval₂_sub, eval₂_X_pow, eval₂_C, hpow]
   exact sub_eq_zero.mpr rfl
@@ -62,15 +62,16 @@ theorem mem_adjoin_single_of_mem_fieldRange (n : ℕ+) {x : HahnSeries ℚ K}
     x ∈ Algebra.adjoin (LaurentSeries.toHahnSeries K 1).fieldRange
       {HahnSeries.single ((1 : ℚ) / (n : ℚ)) (1 : K)} := by
   obtain ⟨f, rfl⟩ := hx
-  obtain ⟨g, hf⟩ := exists_eq_sum_single_mul_expand n f
-  rw [hf, map_sum]
+  rw [← sum_single_mul_expand_contract n f, map_sum]
   refine Subalgebra.sum_mem _ fun r _ ↦ ?_
   have h1 : toHahnSeries K n (HahnSeries.single (r : ℤ) (1 : K)) =
-      HahnSeries.single ((1 : ℚ) / (n : ℚ)) (1 : K) ^ r := by
+      HahnSeries.single ((1 : ℚ) / (n : ℚ)) (1 : K) ^ (r : ℕ) := by
     rw [HahnSeries.single_pow, one_pow, toHahnSeries_single, nsmul_eq_mul, mul_one_div,
       Int.cast_natCast]
-  have h2 : toHahnSeries K n (expand K n (g r)) ∈ (toHahnSeries K 1).fieldRange :=
-    ⟨g r, by simpa [one_mul] using (DFunLike.congr_fun (toHahnSeries_comp_expand K 1 n) (g r)).symm⟩
+  have h2 : toHahnSeries K n (expand n (contract n f r)) ∈ (toHahnSeries K 1).fieldRange :=
+    ⟨contract n f r, by
+      simpa [one_mul] using
+        (DFunLike.congr_fun (toHahnSeries_comp_expand K 1 n) (contract n f r)).symm⟩
   rw [map_mul, h1]
   exact mul_mem (Subalgebra.pow_mem _ (Algebra.self_mem_adjoin_singleton _ _) _)
     (Subalgebra.algebraMap_mem _ (⟨_, h2⟩ : (toHahnSeries K 1).fieldRange))
