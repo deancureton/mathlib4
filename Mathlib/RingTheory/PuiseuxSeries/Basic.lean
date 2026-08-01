@@ -58,7 +58,7 @@ theorem toHahnSeries_apply (n : ℕ+) (f : LaurentSeries K) :
   rfl
 
 theorem toHahnSeries_single (n : ℕ+) (k : ℤ) (a : K) :
-    toHahnSeries K n (HahnSeries.single k a) = HahnSeries.single ((k : ℚ) / (n : ℚ)) a :=
+    toHahnSeries K n (HahnSeries.single k a) = HahnSeries.single ((k : ℚ) / n) a :=
   (HahnSeries.ofLaurentSeries_single _ _ k a).trans <| by
     rw [zsmul_eq_mul, ← div_eq_mul_inv]
 
@@ -100,7 +100,7 @@ theorem mem_subfield_iff {x : HahnSeries ℚ K} :
 lies in `(1 / n) • ℤ` for a single `n`. -/
 theorem mem_subfield_iff_support {x : HahnSeries ℚ K} :
     x ∈ subfield K ↔
-      ∃ n : ℕ+, ∀ q ∈ x.support, ∃ k : ℤ, q = (k : ℚ) / (n : ℚ) := by
+      ∃ n : ℕ+, ∀ q ∈ x.support, ∃ k : ℤ, q = (k : ℚ) / n := by
   rw [mem_subfield_iff]
   refine exists_congr fun n ↦ ?_
   rw [show x ∈ (toHahnSeries K n).fieldRange ↔ _ from HahnSeries.mem_range_embDomain_iff]
