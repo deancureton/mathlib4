@@ -58,7 +58,7 @@ theorem Monic.exists_factorization_rootMultiplicity_zero {p : (PowerSeries K)[X]
   have key (n : ℕ) : e (PowerSeries.coeff n φ) =
       (p.map (PowerSeries.constantCoeff (R := K))).coeff n := by
     simp only [hφ, PowerSeries.coeff_map, Polynomial.coeff_coe, Polynomial.coeff_map]; rfl
-  have horder : φ.order = (k : ℕ∞) := by
+  have horder : φ.order = k := by
     have hnz : (p.map (PowerSeries.constantCoeff (R := K))) ≠ 0 := (hp.map _).ne_zero
     rw [← hk, Polynomial.rootMultiplicity_eq_natTrailingDegree', PowerSeries.order_eq_nat]
     refine ⟨fun h ↦ Polynomial.trailingCoeff_nonzero_iff_nonzero.mpr hnz ?_,
@@ -70,12 +70,12 @@ theorem Monic.exists_factorization_rootMultiplicity_zero {p : (PowerSeries K)[X]
   have hfdeg : f.natDegree = k := by
     rw [H.natDegree_eq_toNat_order_map, ← hφ, horder, ENat.toNat_natCast]
   have hordf : ((f : PowerSeries A).map
-      (Ideal.Quotient.mk (IsLocalRing.maximalIdeal A))).order = (k : ℕ∞) := by
+      (Ideal.Quotient.mk (IsLocalRing.maximalIdeal A))).order = k := by
     rw [← H.isDistinguishedAt.coe_natDegree_eq_order_map (f : PowerSeries A) 1 (by simp)
       (by simp), hfdeg]
   have hdivmod : p = f * (p /ₘ f) + p %ₘ f :=
     ((add_comm _ _).trans (p.modByMonic_add_div f)).symm
-  have hrdeg : (p %ₘ f).degree < (k : ℕ) :=
+  have hrdeg : (p %ₘ f).degree < k :=
     hfdeg ▸ Polynomial.degree_eq_natDegree hfmonic.ne_zero ▸ p.degree_modByMonic_lt hfmonic
   have huniq := H.isDistinguishedAt.isWeierstrassDivisorAt'.eq_of_mul_add_eq_mul_add (q := u)
     (q' := ↑(p /ₘ f)) (r := 0) (r' := p %ₘ f) (by simp [hordf]) (by rw [hordf]; simpa using hrdeg)

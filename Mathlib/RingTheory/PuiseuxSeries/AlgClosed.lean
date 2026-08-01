@@ -93,7 +93,7 @@ private theorem Monic.exists_rootMultiplicity_pos_lt {K : Type*} [Field K] [IsAl
     eq_of_monic_of_dvd_of_natDegree_le ((monic_X_sub_C a).pow m) hr
       (dvd_trans (pow_dvd_pow _ (Nat.le_of_not_lt hlt)) (pow_rootMultiplicity_dvd r a))
       (by simp [hm])
-  have hz : (m : ℕ) • (-a) = 0 := by
+  have hz : m • (-a) = 0 := by
     rw [← nextCoeff_X_sub_C a, ← (monic_X_sub_C a).nextCoeff_pow, ← heq,
       nextCoeff_of_natDegree_pos (by omega), hm, hsub]
   rw [nsmul_eq_mul, mul_neg, neg_eq_zero, mul_eq_zero] at hz
@@ -110,7 +110,7 @@ variable {K : Type*} [Field K]
 private theorem toHahnSeries_expand_single_scaling (n q : ℕ+) (a : ℤ) (c : LaurentSeries K)
     (i m : ℕ) :
     HahnSeries.single ((a : ℚ) / ((n * q : ℕ+) : ℚ)) (1 : K) ^ m *
-        toHahnSeries K (n * q) (expand q c * HahnSeries.single (a * ((i : ℤ) - (m : ℤ))) 1) =
+        toHahnSeries K (n * q) (expand q c * HahnSeries.single (a * ((i : ℤ) - m)) 1) =
       toHahnSeries K n c * HahnSeries.single ((a : ℚ) / ((n * q : ℕ+) : ℚ)) (1 : K) ^ i := by
   rw [map_mul, ← RingHom.comp_apply (toHahnSeries K (n * q)) (expand q),
     toHahnSeries_comp_expand, toHahnSeries_single, HahnSeries.single_pow, HahnSeries.single_pow,
@@ -128,7 +128,7 @@ private theorem orderTop_expand_mul_single (q : ℕ+) {c : LaurentSeries K} (hc 
 
 private theorem orderTop_expand_mul_single_nonneg (q : ℕ+) (c : LaurentSeries K) (k : ℤ)
     (h : c ≠ 0 → 0 ≤ (q : ℤ) * c.order + k) :
-    (0 : WithTop ℤ) ≤ (expand q c * HahnSeries.single k (1 : K)).orderTop := by
+    0 ≤ (expand q c * HahnSeries.single k (1 : K)).orderTop := by
   by_cases hc : c = 0
   · simp [hc]
   · rw [orderTop_expand_mul_single q hc]
@@ -138,10 +138,10 @@ private theorem orderTop_expand_mul_single_nonneg (q : ℕ+) (c : LaurentSeries 
 nonnegative. -/
 private theorem newton_slope_min_le {p : Polynomial (LaurentSeries K)} {m i₀ : ℕ} (hi₀m : i₀ < m)
     (hmin : ∀ i < m, p.coeff i ≠ 0 →
-      ((p.coeff i₀).order : ℚ) / ((m - i₀ : ℕ) : ℚ) ≤ ((p.coeff i).order : ℚ) / ((m - i : ℕ) : ℚ))
+      ((p.coeff i₀).order : ℚ) / (m - i₀ : ℕ) ≤ ((p.coeff i).order : ℚ) / (m - i : ℕ))
     {i : ℕ} (him : i < m) (hci : p.coeff i ≠ 0) :
-    0 ≤ ((m : ℤ) - (i₀ : ℤ)) * (p.coeff i).order +
-      (p.coeff i₀).order * ((i : ℤ) - (m : ℤ)) := by
+    0 ≤ ((m : ℤ) - i₀) * (p.coeff i).order +
+      (p.coeff i₀).order * ((i : ℤ) - m) := by
   have h := hmin i him hci
   rw [div_le_div_iff₀ (mod_cast Nat.zero_lt_sub_of_lt hi₀m : (0 : ℚ) < _)
     (mod_cast Nat.zero_lt_sub_of_lt him : (0 : ℚ) < _)] at h
@@ -153,8 +153,8 @@ private theorem newton_slope_min_le {p : Polynomial (LaurentSeries K)} {m i₀ :
 lifts to a monic polynomial of degree `m` over `K⟦X⟧`, with nonzero reduction at `i₀` when
 `d i₀` has order zero. -/
 private theorem exists_integral_poly_of_orderTop_nonneg {m i₀ : ℕ} (d : ℕ → LaurentSeries K)
-    (hdnn : ∀ i : ℕ, (0 : WithTop ℤ) ≤ (d i).orderTop) (hdm : d m = 1) (hdm1 : d (m - 1) = 0)
-    (hi₀m : i₀ ≤ m) (hd₀ : (d i₀).orderTop = ((0 : ℤ) : WithTop ℤ)) :
+    (hdnn : ∀ i : ℕ, 0 ≤ (d i).orderTop) (hdm : d m = 1) (hdm1 : d (m - 1) = 0)
+    (hi₀m : i₀ ≤ m) (hd₀ : (d i₀).orderTop = 0) :
     ∃ P : Polynomial (PowerSeries K), P.Monic ∧ P.natDegree = m ∧
       (P.map (PowerSeries.constantCoeff (R := K))).coeff (m - 1) = 0 ∧
       (P.map (PowerSeries.constantCoeff (R := K))).coeff i₀ ≠ 0 ∧
@@ -188,7 +188,7 @@ private theorem eval_map_toHahnSeries_of_coeff (n q : ℕ+) (a : ℤ)
     {p : Polynomial (LaurentSeries K)} {P : Polynomial (PowerSeries K)} {m : ℕ}
     (hm : p.natDegree = m) (hnd : P.natDegree = m)
     (hPd : ∀ i ≤ m, HahnSeries.ofPowerSeries ℤ K (P.coeff i) =
-      expand q (p.coeff i) * HahnSeries.single (a * ((i : ℤ) - (m : ℤ))) 1)
+      expand q (p.coeff i) * HahnSeries.single (a * ((i : ℤ) - m)) 1)
     (y : HahnSeries ℚ K) :
     (p.map (toHahnSeries K n)).eval (HahnSeries.single ((a : ℚ) / ((n * q : ℕ+) : ℚ)) 1 * y) =
       HahnSeries.single ((a : ℚ) / ((n * q : ℕ+) : ℚ)) 1 ^ m *
@@ -221,33 +221,34 @@ private theorem newton_slope_scaling (n : ℕ+) {p : Polynomial (LaurentSeries K
   obtain ⟨i₁, hi₁m, hi₁⟩ := hex
   obtain ⟨i₀, hi₀S, hi₀min⟩ :=
     ((Finset.range m).filter (fun i ↦ p.coeff i ≠ 0)).exists_min_image
-      (fun i ↦ ((p.coeff i).order : ℚ) / ((m - i : ℕ) : ℚ))
+      (fun i ↦ ((p.coeff i).order : ℚ) / (m - i : ℕ))
       ⟨i₁, Finset.mem_filter.2 ⟨Finset.mem_range.2 hi₁m, hi₁⟩⟩
   obtain ⟨hi₀m, hc₀⟩ : i₀ < m ∧ p.coeff i₀ ≠ 0 := by
     simpa [Finset.mem_filter, Finset.mem_range] using hi₀S
   obtain ⟨q, hq⟩ : ∃ q : ℕ+, (q : ℕ) = m - i₀ := ⟨⟨m - i₀, Nat.zero_lt_sub_of_lt hi₀m⟩, rfl⟩
   set a : ℤ := (p.coeff i₀).order with ha
-  have hqZ : (q : ℤ) = (m : ℤ) - (i₀ : ℤ) := by rw [hq]; omega
+  have hqZ : (q : ℤ) = (m : ℤ) - i₀ := by rw [hq]; omega
   have key : ∀ i, i < m → p.coeff i ≠ 0 →
-      0 ≤ (q : ℤ) * (p.coeff i).order + a * ((i : ℤ) - (m : ℤ)) := fun i him hci ↦ by
+      0 ≤ (q : ℤ) * (p.coeff i).order + a * ((i : ℤ) - m) := fun i him hci ↦ by
     rw [hqZ]
     exact newton_slope_min_le hi₀m
       (fun j hj hcj ↦ hi₀min j (Finset.mem_filter.2 ⟨Finset.mem_range.2 hj, hcj⟩)) him hci
   let d : ℕ → LaurentSeries K := fun i ↦
-    expand q (p.coeff i) * HahnSeries.single (a * ((i : ℤ) - (m : ℤ))) 1
+    expand q (p.coeff i) * HahnSeries.single (a * ((i : ℤ) - m)) 1
   have hdm : d m = 1 := by
     simp [d, show p.coeff m = 1 from hm ▸ hp.coeff_natDegree, -expand_apply]
   have hdz {i} (hi : p.coeff i = 0) : d i = 0 := by simp [d, hi]
-  have hdnn (i : ℕ) : (0 : WithTop ℤ) ≤ (d i).orderTop := by
+  have hdnn (i : ℕ) : 0 ≤ (d i).orderTop := by
     refine orderTop_expand_mul_single_nonneg q _ _ fun hci ↦ ?_
     rcases eq_or_lt_of_le (hm ▸ Polynomial.le_natDegree_of_ne_zero hci) with heq | hlt
     · simp [heq, show p.coeff m = 1 from hm ▸ hp.coeff_natDegree]
     · exact key i hlt hci
-  have hd₀ : (d i₀).orderTop = ((0 : ℤ) : WithTop ℤ) := by
+  have hd₀ : (d i₀).orderTop = 0 := by
     rw [show d i₀ =
-        expand q (p.coeff i₀) * HahnSeries.single (a * ((i₀ : ℤ) - (m : ℤ))) 1 from rfl,
+        expand q (p.coeff i₀) * HahnSeries.single (a * ((i₀ : ℤ) - m)) 1 from rfl,
       orderTop_expand_mul_single q hc₀, hqZ, ha]
     ring_nf
+    simp
   obtain ⟨P, hmon, hnd, hPsub, hPi₀, hPd⟩ :=
     exists_integral_poly_of_orderTop_nonneg d hdnn hdm (hdz hsub) hi₀m.le hd₀
   exact ⟨q, a, P, hmon, hnd, hPsub, ⟨i₀, hi₀m, hPi₀⟩,
