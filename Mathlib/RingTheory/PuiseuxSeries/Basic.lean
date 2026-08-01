@@ -56,21 +56,28 @@ def toHahnSeries (n : ℕ+) : LaurentSeries K →+* HahnSeries ℚ K :=
     fun _ _ ↦ (div_le_div_iff_of_pos_right (Nat.cast_pos.mpr n.pos)).trans Int.cast_le
 
 @[simp]
+theorem toHahnSeries_apply (n : ℕ+) (f : LaurentSeries K) :
+    toHahnSeries K n f = HahnSeries.embDomain
+      ⟨⟨AddMonoidHom.mk' (fun k : ℤ ↦ (k : ℚ) / (n : ℚ)) fun a b ↦ by push_cast; ring,
+          fun _ _ h ↦ Int.cast_injective ((div_left_inj' (Nat.cast_ne_zero.mpr n.ne_zero)).mp h)⟩,
+        (div_le_div_iff_of_pos_right (Nat.cast_pos.mpr n.pos)).trans Int.cast_le⟩ f :=
+  rfl
+
 theorem toHahnSeries_single (n : ℕ+) (k : ℤ) (a : K) :
-    toHahnSeries K n (HahnSeries.single k a) = HahnSeries.single ((k : ℚ) / (n : ℚ)) a :=
-  HahnSeries.embDomain_single ..
+    toHahnSeries K n (HahnSeries.single k a) = HahnSeries.single ((k : ℚ) / (n : ℚ)) a := by
+  simp [HahnSeries.embDomain_single]
 
 theorem toHahnSeries_comp_expand (n m : ℕ+) :
-    (toHahnSeries K (n * m)).comp (expand K m) = toHahnSeries K n :=
+    (toHahnSeries K (n * m)).comp (expand m) = toHahnSeries K n :=
   RingHom.ext fun f ↦ by
-    change HahnSeries.embDomain _ (HahnSeries.embDomain _ f) = HahnSeries.embDomain _ f
-    rw [HahnSeries.embDomain_embDomain]
+    simp only [RingHom.coe_comp, Function.comp_apply, toHahnSeries_apply, expand_apply,
+      HahnSeries.embDomain_embDomain]
     congr 1 with k
     simp [mul_comm ((n : ℚ)), mul_div_mul_left]
 
 theorem fieldRange_toHahnSeries_le (n m : ℕ+) :
     (toHahnSeries K n).fieldRange ≤ (toHahnSeries K (n * m)).fieldRange :=
-  fun _ ⟨f, hf⟩ ↦ ⟨expand K m f, (DFunLike.congr_fun (toHahnSeries_comp_expand K n m) f).trans hf⟩
+  fun _ ⟨f, hf⟩ ↦ ⟨expand m f, (DFunLike.congr_fun (toHahnSeries_comp_expand K n m) f).trans hf⟩
 
 theorem directed_fieldRange_toHahnSeries :
     Directed (· ≤ ·) fun n : ℕ+ ↦ (toHahnSeries K n).fieldRange := fun a b ↦
