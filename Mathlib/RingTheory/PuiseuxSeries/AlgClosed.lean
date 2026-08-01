@@ -160,7 +160,7 @@ private theorem exists_integral_poly_of_orderTop_nonneg {m i₀ : ℕ} (d : ℕ 
       (P.map (PowerSeries.constantCoeff (R := K))).coeff i₀ ≠ 0 ∧
       ∀ i ≤ m, HahnSeries.ofPowerSeries ℤ K (P.coeff i) = d i := by
   classical
-  choose D hD using fun i ↦ exists_ofPowerSeries_eq_of_orderTop_nonneg (hdnn i)
+  choose D hD using fun i ↦ mem_range_ofPowerSeries_iff.mpr (hdnn i)
   have hDm : D m = 1 := HahnSeries.ofPowerSeries_injective (Γ := ℤ) (by simpa [hdm] using hD m)
   have hDm1 : D (m - 1) = 0 :=
     HahnSeries.ofPowerSeries_injective (Γ := ℤ) (by simpa [hdm1] using hD (m - 1))

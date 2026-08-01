@@ -30,7 +30,11 @@ type with a zero. They are denoted `R⸨X⸩`.
 * Defines `LaurentSeries.powerSeriesPart`
 * Defines `LaurentSeries.expand`, the ring endomorphism of `R⸨X⸩` sending `X` to `X ^ m`, and
   `LaurentSeries.contract`, its opposite, giving the unique decomposition of a Laurent series as
-  `∑ r < n, X ^ r * expand n (contract n f r)`.
+  `∑ r < n, single r 1 * expand n (contract n f r)`, where `single r 1` is `X ^ r`.
+* Defines `HahnSeries.ofLaurentSeries`, the ring embedding `R⸨X⸩ →+* HahnSeries Γ R` obtained by
+  embedding the exponents along `k ↦ k • g` for a strictly positive `g : Γ`.
+* In `LaurentSeries.mem_range_ofPowerSeries_iff` we show that a Laurent series comes from a power
+  series if and only if its `orderTop` is nonnegative.
 * Defines the localization map `LaurentSeries.of_powerSeries_localization` which evaluates to
   `HahnSeries.ofPowerSeries`.
 * Embedding of rational functions into Laurent series, provided as a coercion, utilizing
@@ -262,21 +266,29 @@ theorem X_order_mul_powerSeriesPart {n : ℕ} {f : R⸨X⸩} (hn : n = f.order) 
   simp only [map_mul, map_pow, ofPowerSeries_X, single_pow, nsmul_eq_mul, mul_one, one_pow, hn,
     single_order_mul_powerSeriesPart]
 
-theorem exists_ofPowerSeries_eq_of_orderTop_nonneg {f : R⸨X⸩} (hf : 0 ≤ f.orderTop) :
-    ∃ F : R⟦X⟧, ofPowerSeries ℤ R F = f :=
-  ⟨PowerSeries.X ^ f.order.toNat * f.powerSeriesPart,
-    X_order_mul_powerSeriesPart (Int.toNat_of_nonneg (zero_le_orderTop_iff.mp hf))⟩
+theorem mem_range_ofPowerSeries_iff {f : R⸨X⸩} :
+    f ∈ Set.range (ofPowerSeries ℤ R) ↔ 0 ≤ f.orderTop := by
+  constructor
+  · rintro ⟨F, rfl⟩
+    refine le_orderTop_iff_forall.mpr fun j hj ↦ ?_
+    rw [ofPowerSeries_apply]
+    refine embDomain_of_notMem_range fun ⟨k, hk⟩ ↦ ?_
+    simp only [Nat.castOrderEmbedding_apply] at hk
+    rw [← hk] at hj
+    exact absurd hj (by simp)
+  · exact fun hf ↦ ⟨PowerSeries.X ^ f.order.toNat * f.powerSeriesPart,
+      X_order_mul_powerSeriesPart (Int.toNat_of_nonneg (zero_le_orderTop_iff.mp hf))⟩
 
 /-- The expansion ring endomorphism of `R⸨X⸩` sending `X` to `X ^ m`, obtained by
 embedding the exponents along `k ↦ m * k`. -/
 def expand (m : ℕ+) : R⸨X⸩ →+* R⸨X⸩ :=
-  HahnSeries.embDomainRingHom (AddMonoidHom.mul (m : ℤ))
+  embDomainRingHom (AddMonoidHom.mul (m : ℤ))
     (fun _ _ ↦ mul_left_cancel₀ (by exact_mod_cast m.ne_zero))
     fun _ _ ↦ mul_le_mul_iff_right₀ (by exact_mod_cast m.pos)
 
 @[simp]
 theorem expand_apply (m : ℕ+) (f : R⸨X⸩) :
-    expand m f = HahnSeries.embDomain
+    expand m f = embDomain
       ⟨⟨AddMonoidHom.mul (m : ℤ), fun _ _ ↦ mul_left_cancel₀ (by exact_mod_cast m.ne_zero)⟩,
         mul_le_mul_iff_right₀ (by exact_mod_cast m.pos)⟩ f :=
   rfl
@@ -289,10 +301,35 @@ theorem orderTop_expand (m : ℕ+) (f : R⸨X⸩) :
     (expand m f).orderTop = f.orderTop.map fun k : ℤ ↦ m * k := by
   simp
 
+theorem coeff_expand (m : ℕ+) (f : R⸨X⸩) (k : ℤ) :
+    (expand m f).coeff k = if (m : ℤ) ∣ k then f.coeff (k / (m : ℤ)) else 0 := by
+  rw [expand_apply]
+  split_ifs with h
+  · obtain ⟨j, rfl⟩ := h
+    rw [Int.mul_ediv_cancel_left _ (by exact_mod_cast m.ne_zero)]
+    exact embDomain_coeff
+  · exact embDomain_of_notMem_range fun ⟨j, hj⟩ ↦ h ⟨j, hj.symm⟩
+
+theorem expand_expand (m m' : ℕ+) (f : R⸨X⸩) :
+    expand m (expand m' f) = expand (m * m') f := by
+  simp only [expand_apply, embDomain_embDomain]
+  congr 1 with k
+  simp [mul_assoc]
+
+@[simp]
+theorem expand_one : expand (1 : ℕ+) = RingHom.id R⸨X⸩ :=
+  RingHom.ext fun f ↦ by
+    ext k
+    rw [RingHom.id_apply, coeff_expand]
+    simp
+
+theorem expand_injective (m : ℕ+) : Function.Injective (expand m : R⸨X⸩ → R⸨X⸩) := fun _ _ h ↦
+  embDomain_injective h
+
 /-- The opposite of `expand`, shifted by `r`: the `r`-th component of a Laurent series with
 respect to `n`, obtained by collecting the coefficients at exponents congruent to `r` mod `n`.
 These are the unique components satisfying
-`∑ r : Fin n, X ^ r * expand n (contract n f r) = f`; see
+`∑ r : Fin n, single r 1 * expand n (contract n f r) = f`; see
 `LaurentSeries.sum_single_mul_expand_contract` and `LaurentSeries.contract_eq_of_sum_eq`. -/
 def contract (n : ℕ+) (f : R⸨X⸩) (r : Fin n) : R⸨X⸩ where
   coeff k := f.coeff ((n : ℤ) * k + (r : ℕ))
@@ -306,22 +343,22 @@ theorem coeff_contract (n : ℕ+) (f : R⸨X⸩) (r : Fin n) (k : ℤ) :
   rfl
 
 theorem coeff_single_mul_expand (n : ℕ+) (r : Fin n) (g : R⸨X⸩) (j : ℤ) :
-    (HahnSeries.single (r : ℤ) 1 * expand n g).coeff j =
+    (single (r : ℤ) 1 * expand n g).coeff j =
       if j % (n : ℤ) = (r : ℤ) then g.coeff (j / (n : ℤ)) else 0 := by
-  rw [HahnSeries.coeff_single_mul, one_mul, expand_apply]
+  rw [coeff_single_mul, one_mul, expand_apply]
   split_ifs with h
   · rw [show j - (r : ℤ) = (n : ℤ) * (j / (n : ℤ)) by
       rw [← h]; exact (eq_sub_of_add_eq (Int.mul_ediv_add_emod j n)).symm]
-    exact HahnSeries.embDomain_coeff
-  · refine HahnSeries.embDomain_of_notMem_range fun ⟨k, hk⟩ ↦ h ?_
+    exact embDomain_coeff
+  · refine embDomain_of_notMem_range fun ⟨k, hk⟩ ↦ h ?_
     have hk' : j = (n : ℤ) * k + (r : ℤ) := by rw [← sub_eq_iff_eq_add]; exact hk.symm
     rw [hk', add_comm, Int.add_mul_emod_self_left,
       Int.emod_eq_of_lt (Int.natCast_nonneg _) (mod_cast r.isLt)]
 
-/-- Every Laurent series decomposes as `∑ r < n, X ^ r * expand n (contract n f r)`: the `r`-th
-component collects the coefficients at exponents congruent to `r` mod `n`. -/
+/-- Every Laurent series decomposes as `∑ r < n, single r 1 * expand n (contract n f r)`: the
+`r`-th component collects the coefficients at exponents congruent to `r` mod `n`. -/
 theorem sum_single_mul_expand_contract (n : ℕ+) (f : R⸨X⸩) :
-    ∑ r : Fin n, HahnSeries.single (r : ℤ) 1 * expand n (contract n f r) = f := by
+    ∑ r : Fin n, single (r : ℤ) 1 * expand n (contract n f r) = f := by
   have hn0 : (0 : ℤ) < (n : ℤ) := mod_cast n.pos
   ext j
   have hjn : (j % (n : ℤ)).toNat < (n : ℕ) :=
@@ -334,10 +371,10 @@ theorem sum_single_mul_expand_contract (n : ℕ+) (f : R⸨X⸩) :
     Int.mul_ediv_add_emod]
 
 /-- The decomposition of `LaurentSeries.sum_single_mul_expand_contract` is unique: any family
-`g` of components with `∑ r : Fin n, X ^ r * expand n (g r) = f` is given by
+`g` of components with `∑ r : Fin n, single r 1 * expand n (g r) = f` is given by
 `LaurentSeries.contract`. -/
 theorem contract_eq_of_sum_eq {n : ℕ+} {f : R⸨X⸩} {g : Fin n → R⸨X⸩}
-    (hg : ∑ r : Fin n, HahnSeries.single (r : ℤ) 1 * expand n (g r) = f) (r : Fin n) :
+    (hg : ∑ r : Fin n, single (r : ℤ) 1 * expand n (g r) = f) (r : Fin n) :
     contract n f r = g r := by
   have hn0 : (0 : ℤ) < (n : ℤ) := mod_cast n.pos
   have hlt : (r : ℤ) < (n : ℤ) := mod_cast r.isLt
@@ -351,6 +388,46 @@ theorem contract_eq_of_sum_eq {n : ℕ+} {f : R⸨X⸩} {g : Fin n → R⸨X⸩}
     Int.ediv_eq_zero_of_lt (Int.natCast_nonneg _) hlt, zero_add]
 
 end Semiring
+
+end LaurentSeries
+
+namespace HahnSeries
+
+section OfLaurentSeries
+
+variable [Semiring R] {Γ : Type*} [AddCommGroup Γ] [PartialOrder Γ] [IsOrderedAddMonoid Γ]
+
+/-- For a strictly positive `g : Γ`, the ring embedding `R⸨X⸩ →+* HahnSeries Γ R` sending `X` to
+the monomial with exponent `g`, obtained by embedding the exponents along `k ↦ k • g`. -/
+def ofLaurentSeries (g : Γ) (hg : 0 < g) : LaurentSeries R →+* HahnSeries Γ R :=
+  embDomainRingHom (zmultiplesHom Γ g) (fun _ _ h ↦ (zsmul_left_strictMono hg).injective h)
+    fun _ _ ↦ (zsmul_left_strictMono hg).le_iff_le
+
+@[simp]
+theorem ofLaurentSeries_apply (g : Γ) (hg : 0 < g) (f : LaurentSeries R) :
+    ofLaurentSeries g hg f = embDomain
+      ⟨⟨zmultiplesHom Γ g, fun _ _ h ↦ (zsmul_left_strictMono hg).injective h⟩,
+        (zsmul_left_strictMono hg).le_iff_le⟩ f :=
+  rfl
+
+theorem ofLaurentSeries_single (g : Γ) (hg : 0 < g) (k : ℤ) (a : R) :
+    ofLaurentSeries g hg (single k a) = single (k • g) a := by
+  rw [ofLaurentSeries_apply, embDomain_single]; rfl
+
+theorem ofLaurentSeries_comp_expand (g : Γ) (hg : 0 < g) (m : ℕ+) :
+    (ofLaurentSeries g hg).comp (LaurentSeries.expand (R := R) m) =
+      ofLaurentSeries ((m : ℤ) • g) (zsmul_pos hg (mod_cast m.pos)) :=
+  RingHom.ext fun f ↦ by
+    simp only [RingHom.coe_comp, Function.comp_apply, ofLaurentSeries_apply,
+      LaurentSeries.expand_apply, embDomain_embDomain]
+    congr 1 with k
+    exact (congrArg (· • g) (mul_comm (m : ℤ) k)).trans (mul_smul k (m : ℤ) g)
+
+end OfLaurentSeries
+
+end HahnSeries
+
+namespace LaurentSeries
 
 instance [CommSemiring R] : Algebra R⟦X⟧ R⸨X⸩ := (HahnSeries.ofPowerSeries ℤ R).toAlgebra
 
