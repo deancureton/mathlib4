@@ -64,7 +64,7 @@ theorem toHahnSeries_single (n : ℕ+) (k : ℤ) (a : K) :
 
 theorem toHahnSeries_comp_expand (n m : ℕ+) :
     (toHahnSeries K (n * m)).comp (expand m) = toHahnSeries K n := by
-  unfold toHahnSeries
+  simp only [toHahnSeries]
   rw [HahnSeries.ofLaurentSeries_comp_expand]
   congr 1
   rw [zsmul_eq_mul]
@@ -102,12 +102,11 @@ theorem mem_subfield_iff_support {x : HahnSeries ℚ K} :
     x ∈ subfield K ↔
       ∃ n : ℕ+, ∀ q ∈ x.support, ∃ k : ℤ, q = (k : ℚ) / n := by
   rw [mem_subfield_iff]
-  refine exists_congr fun n ↦ ?_
-  rw [show x ∈ (toHahnSeries K n).fieldRange ↔ _ from HahnSeries.mem_range_embDomain_iff]
-  exact ⟨fun h q hq ↦ (h hq).imp fun _ hk ↦ by
-      rw [← hk]; exact (zsmul_eq_mul _ _).trans (div_eq_mul_inv _ _).symm,
-    fun h q hq ↦ (h q hq).imp fun _ hk ↦ by
-      rw [hk]; exact (zsmul_eq_mul _ _).trans (div_eq_mul_inv _ _).symm⟩
+  refine exists_congr fun n ↦ HahnSeries.mem_range_embDomain_iff.trans ?_
+  have hcast : ∀ k : ℤ, k • ((n : ℚ))⁻¹ = (k : ℚ) / n := fun k ↦
+    (zsmul_eq_mul _ _).trans (div_eq_mul_inv _ _).symm
+  exact ⟨fun h q hq ↦ (h hq).imp fun k hk ↦ by rw [← hk]; exact hcast k,
+    fun h q hq ↦ (h q hq).imp fun k hk ↦ by rw [hk]; exact hcast k⟩
 
 theorem exists_common_index (s : Finset (HahnSeries ℚ K))
     (hs : ∀ x ∈ s, x ∈ subfield K) :
@@ -133,18 +132,6 @@ instance : Field (PuiseuxSeries K) :=
 instance : CoeOut (PuiseuxSeries K) (HahnSeries ℚ K) :=
   ⟨Subtype.val⟩
 
-variable {K}
-
-@[simp, norm_cast]
-theorem coe_add (x y : PuiseuxSeries K) : ((x + y : PuiseuxSeries K) : HahnSeries ℚ K) = x + y :=
-  rfl
-
-@[simp, norm_cast]
-theorem coe_mul (x y : PuiseuxSeries K) : ((x * y : PuiseuxSeries K) : HahnSeries ℚ K) = x * y :=
-  rfl
-
-variable (K)
-
 /-- The `K((t))`-algebra structure on Puiseux series, given by `toHahnSeries K 1`
 corestricted to the Puiseux subfield. -/
 instance algebraLaurentSeries : Algebra (LaurentSeries K) (PuiseuxSeries K) :=
@@ -152,8 +139,69 @@ instance algebraLaurentSeries : Algebra (LaurentSeries K) (PuiseuxSeries K) :=
     (LaurentSeries.toHahnSeries K 1).codRestrict (subfield K) fun x ↦
       (mem_subfield_iff K).mpr ⟨1, RingHom.mem_fieldRange_self _ x⟩
 
+variable {K}
+
+theorem coe_injective : Function.Injective ((↑) : PuiseuxSeries K → HahnSeries ℚ K) :=
+  Subtype.val_injective
+
 @[simp, norm_cast]
-theorem coe_algebraMap {K : Type*} [Field K] (f : LaurentSeries K) :
+theorem coe_zero : ((0 : PuiseuxSeries K) : HahnSeries ℚ K) = 0 :=
+  rfl
+
+@[simp, norm_cast]
+theorem coe_one : ((1 : PuiseuxSeries K) : HahnSeries ℚ K) = 1 :=
+  rfl
+
+@[simp, norm_cast]
+theorem coe_add (x y : PuiseuxSeries K) : ((x + y : PuiseuxSeries K) : HahnSeries ℚ K) = x + y :=
+  rfl
+
+@[simp, norm_cast]
+theorem coe_neg (x : PuiseuxSeries K) : ((-x : PuiseuxSeries K) : HahnSeries ℚ K) = -x :=
+  rfl
+
+@[simp, norm_cast]
+theorem coe_sub (x y : PuiseuxSeries K) : ((x - y : PuiseuxSeries K) : HahnSeries ℚ K) = x - y :=
+  rfl
+
+@[simp, norm_cast]
+theorem coe_mul (x y : PuiseuxSeries K) : ((x * y : PuiseuxSeries K) : HahnSeries ℚ K) = x * y :=
+  rfl
+
+@[simp, norm_cast]
+theorem coe_inv (x : PuiseuxSeries K) :
+    ((x⁻¹ : PuiseuxSeries K) : HahnSeries ℚ K) = (x : HahnSeries ℚ K)⁻¹ :=
+  rfl
+
+@[simp, norm_cast]
+theorem coe_div (x y : PuiseuxSeries K) : ((x / y : PuiseuxSeries K) : HahnSeries ℚ K) = x / y :=
+  rfl
+
+@[simp, norm_cast]
+theorem coe_pow (x : PuiseuxSeries K) (n : ℕ) :
+    ((x ^ n : PuiseuxSeries K) : HahnSeries ℚ K) = (x : HahnSeries ℚ K) ^ n :=
+  rfl
+
+@[simp, norm_cast]
+theorem coe_zpow (x : PuiseuxSeries K) (n : ℤ) :
+    ((x ^ n : PuiseuxSeries K) : HahnSeries ℚ K) = (x : HahnSeries ℚ K) ^ n :=
+  rfl
+
+@[simp, norm_cast]
+theorem coe_natCast (n : ℕ) : ((n : PuiseuxSeries K) : HahnSeries ℚ K) = n :=
+  rfl
+
+@[simp, norm_cast]
+theorem coe_intCast (n : ℤ) : ((n : PuiseuxSeries K) : HahnSeries ℚ K) = n :=
+  rfl
+
+@[simp, norm_cast]
+theorem coe_inj {x y : PuiseuxSeries K} :
+    (x : HahnSeries ℚ K) = (y : HahnSeries ℚ K) ↔ x = y :=
+  Subtype.coe_inj
+
+@[simp, norm_cast]
+theorem coe_algebraMap (f : LaurentSeries K) :
     (algebraMap (LaurentSeries K) (PuiseuxSeries K) f : HahnSeries ℚ K) =
       LaurentSeries.toHahnSeries K 1 f :=
   rfl
