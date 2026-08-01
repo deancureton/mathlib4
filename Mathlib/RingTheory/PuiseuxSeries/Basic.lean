@@ -19,7 +19,7 @@ field `HahnSeries ℚ K`, namely the directed union of the images of the embeddi
 ## Main definitions
 
 * `LaurentSeries.toHahnSeries K n`: the ring embedding `K((t)) →+* HahnSeries ℚ K`
-  sending `t` to `t ^ (1 / n)`.
+  sending `t` to `t ^ (1 / n)`, the special case `g = 1 / n` of `HahnSeries.ofLaurentSeries`.
 * `PuiseuxSeries.subfield K`: the Puiseux subfield `⨆ n, (toHahnSeries K n).fieldRange` of
   `HahnSeries ℚ K`.
 * `PuiseuxSeries K`: the type of Puiseux series over `K`, a field, equipped with an algebra
@@ -47,33 +47,29 @@ namespace LaurentSeries
 
 variable (K : Type*) [Field K]
 
-/-- The ring embedding `K((t)) →+* HahnSeries ℚ K` sending `t` to `t ^ (1 / n)`, obtained by
-embedding the exponents along `k ↦ k / n : ℤ → ℚ`. -/
+/-- The ring embedding `K((t)) →+* HahnSeries ℚ K` sending `t` to `t ^ (1 / n)`, the special
+case `g = 1 / n` of `HahnSeries.ofLaurentSeries`. -/
 def toHahnSeries (n : ℕ+) : LaurentSeries K →+* HahnSeries ℚ K :=
-  HahnSeries.embDomainRingHom
-    (AddMonoidHom.mk' (fun k : ℤ ↦ (k : ℚ) / (n : ℚ)) fun a b ↦ by push_cast; ring)
-    (fun _ _ h ↦ Int.cast_injective ((div_left_inj' (Nat.cast_ne_zero.mpr n.ne_zero)).mp h))
-    fun _ _ ↦ (div_le_div_iff_of_pos_right (Nat.cast_pos.mpr n.pos)).trans Int.cast_le
+  HahnSeries.ofLaurentSeries ((n : ℚ)⁻¹) (inv_pos.mpr (mod_cast n.pos))
 
 @[simp]
 theorem toHahnSeries_apply (n : ℕ+) (f : LaurentSeries K) :
-    toHahnSeries K n f = HahnSeries.embDomain
-      ⟨⟨AddMonoidHom.mk' (fun k : ℤ ↦ (k : ℚ) / (n : ℚ)) fun a b ↦ by push_cast; ring,
-          fun _ _ h ↦ Int.cast_injective ((div_left_inj' (Nat.cast_ne_zero.mpr n.ne_zero)).mp h)⟩,
-        (div_le_div_iff_of_pos_right (Nat.cast_pos.mpr n.pos)).trans Int.cast_le⟩ f :=
+    toHahnSeries K n f = HahnSeries.ofLaurentSeries ((n : ℚ)⁻¹) (inv_pos.mpr (mod_cast n.pos)) f :=
   rfl
 
 theorem toHahnSeries_single (n : ℕ+) (k : ℤ) (a : K) :
-    toHahnSeries K n (HahnSeries.single k a) = HahnSeries.single ((k : ℚ) / (n : ℚ)) a := by
-  simp [HahnSeries.embDomain_single]
+    toHahnSeries K n (HahnSeries.single k a) = HahnSeries.single ((k : ℚ) / (n : ℚ)) a :=
+  (HahnSeries.ofLaurentSeries_single _ _ k a).trans <| by
+    rw [zsmul_eq_mul, ← div_eq_mul_inv]
 
 theorem toHahnSeries_comp_expand (n m : ℕ+) :
-    (toHahnSeries K (n * m)).comp (expand m) = toHahnSeries K n :=
-  RingHom.ext fun f ↦ by
-    simp only [RingHom.coe_comp, Function.comp_apply, toHahnSeries_apply, expand_apply,
-      HahnSeries.embDomain_embDomain]
-    congr 1 with k
-    simp [mul_comm ((n : ℚ)), mul_div_mul_left]
+    (toHahnSeries K (n * m)).comp (expand m) = toHahnSeries K n := by
+  unfold toHahnSeries
+  rw [HahnSeries.ofLaurentSeries_comp_expand]
+  congr 1
+  rw [zsmul_eq_mul]
+  push_cast
+  field_simp
 
 theorem fieldRange_toHahnSeries_le (n m : ℕ+) :
     (toHahnSeries K n).fieldRange ≤ (toHahnSeries K (n * m)).fieldRange :=
@@ -108,8 +104,10 @@ theorem mem_subfield_iff_support {x : HahnSeries ℚ K} :
   rw [mem_subfield_iff]
   refine exists_congr fun n ↦ ?_
   rw [show x ∈ (toHahnSeries K n).fieldRange ↔ _ from HahnSeries.mem_range_embDomain_iff]
-  exact ⟨fun h q hq ↦ (h hq).imp fun _ hk ↦ hk.symm,
-    fun h q hq ↦ (h q hq).imp fun _ hk ↦ hk.symm⟩
+  exact ⟨fun h q hq ↦ (h hq).imp fun _ hk ↦ by
+      rw [← hk]; exact (zsmul_eq_mul _ _).trans (div_eq_mul_inv _ _).symm,
+    fun h q hq ↦ (h q hq).imp fun _ hk ↦ by
+      rw [hk]; exact (zsmul_eq_mul _ _).trans (div_eq_mul_inv _ _).symm⟩
 
 theorem exists_common_index (s : Finset (HahnSeries ℚ K))
     (hs : ∀ x ∈ s, x ∈ subfield K) :
