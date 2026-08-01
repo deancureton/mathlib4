@@ -218,6 +218,7 @@ private theorem newton_slope_scaling (n : ℕ+) {p : Polynomial (LaurentSeries K
           HahnSeries.single ((a : ℚ) / ((n * q : ℕ+) : ℚ)) 1 ^ m *
               (P.map ((toHahnSeries K (n * q)).comp (HahnSeries.ofPowerSeries ℤ K))).eval y := by
   classical
+  -- choose `i₀` of minimal Newton slope `order (coeff i) / (m - i)`
   obtain ⟨i₁, hi₁m, hi₁⟩ := hex
   obtain ⟨i₀, hi₀S, hi₀min⟩ :=
     ((Finset.range m).filter (fun i ↦ p.coeff i ≠ 0)).exists_min_image
@@ -233,6 +234,7 @@ private theorem newton_slope_scaling (n : ℕ+) {p : Polynomial (LaurentSeries K
     rw [hqZ]
     exact newton_slope_min_le hi₀m
       (fun j hj hcj ↦ hi₀min j (Finset.mem_filter.2 ⟨Finset.mem_range.2 hj, hcj⟩)) him hci
+  -- the rescaled coefficient family, with slopes shifted so every order is nonnegative
   let d : ℕ → LaurentSeries K := fun i ↦
     expand q (p.coeff i) * HahnSeries.single (a * ((i : ℤ) - m)) 1
   have hdm : d m = 1 := by
@@ -249,6 +251,7 @@ private theorem newton_slope_scaling (n : ℕ+) {p : Polynomial (LaurentSeries K
       orderTop_expand_mul_single q hc₀, hqZ, ha]
     ring_nf
     simp
+  -- lift `d` to a monic polynomial over `K⟦X⟧` and transport the evaluation identity
   obtain ⟨P, hmon, hnd, hPsub, hPi₀, hPd⟩ :=
     exists_integral_poly_of_orderTop_nonneg d hdnn hdm (hdz hsub) hi₀m.le hd₀
   exact ⟨q, a, P, hmon, hnd, hPsub, ⟨i₀, hi₀m, hPi₀⟩,
@@ -345,6 +348,7 @@ instance isAlgClosed (K : Type*) [Field K] [IsAlgClosed K] [CharZero K] :
   classical
   set ι : PuiseuxSeries K →+* HahnSeries ℚ K := (PuiseuxSeries.subfield K).subtype
   have hιinj : Function.Injective ι := Subtype.val_injective
+  -- push all coefficients of `r` into the range of a single `toHahnSeries K N`
   obtain ⟨N, hN⟩ :=
     PuiseuxSeries.exists_common_index K
       ((Finset.range (r.natDegree + 1)).image fun i ↦ (r.map ι).coeff i)
@@ -358,6 +362,7 @@ instance isAlgClosed (K : Type*) [Field K] [IsAlgClosed K] [CharZero K] :
         (hN _ (Finset.mem_image.mpr ⟨i, Finset.mem_range.mpr (Nat.lt_succ_of_le hi), rfl⟩))
     · exact ⟨0, by rw [map_zero, Polynomial.coeff_eq_zero_of_natDegree_lt
         (by rw [hr.natDegree_map]; exact Nat.lt_of_not_le hi)]⟩
+  -- lift to a monic polynomial over `K((t))` and take its Puiseux root
   obtain ⟨p, hpmap, hpdeg, hpm⟩ := Polynomial.lifts_and_degree_eq_and_monic
     ((Polynomial.lifts_iff_coeff_lifts _).mpr hrange) (hr.map ι)
   have hdeg : 1 ≤ p.natDegree := by
