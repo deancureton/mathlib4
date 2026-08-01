@@ -110,9 +110,9 @@ variable {K : Type*} [Field K]
 private theorem toHahnSeries_expand_single_scaling (n q : ℕ+) (a : ℤ) (c : LaurentSeries K)
     (i m : ℕ) :
     HahnSeries.single ((a : ℚ) / ((n * q : ℕ+) : ℚ)) (1 : K) ^ m *
-        toHahnSeries K (n * q) (expand K q c * HahnSeries.single (a * ((i : ℤ) - (m : ℤ))) 1) =
+        toHahnSeries K (n * q) (expand q c * HahnSeries.single (a * ((i : ℤ) - (m : ℤ))) 1) =
       toHahnSeries K n c * HahnSeries.single ((a : ℚ) / ((n * q : ℕ+) : ℚ)) (1 : K) ^ i := by
-  rw [map_mul, ← RingHom.comp_apply (toHahnSeries K (n * q)) (expand K q),
+  rw [map_mul, ← RingHom.comp_apply (toHahnSeries K (n * q)) (expand q),
     toHahnSeries_comp_expand, toHahnSeries_single, HahnSeries.single_pow, HahnSeries.single_pow,
     mul_left_comm, HahnSeries.single_mul_single]
   simp only [one_pow, mul_one, nsmul_eq_mul]
@@ -121,14 +121,14 @@ private theorem toHahnSeries_expand_single_scaling (n q : ℕ+) (a : ℤ) (c : L
   ring_nf
 
 private theorem orderTop_expand_mul_single (q : ℕ+) {c : LaurentSeries K} (hc : c ≠ 0) (k : ℤ) :
-    (expand K q c * HahnSeries.single k (1 : K)).orderTop =
+    (expand q c * HahnSeries.single k (1 : K)).orderTop =
       (((q : ℤ) * c.order + k : ℤ) : WithTop ℤ) := by
-  simp [HahnSeries.orderTop_mul, orderTop_expand, HahnSeries.orderTop_single one_ne_zero,
+  simp [HahnSeries.orderTop_mul, HahnSeries.orderTop_single one_ne_zero,
     ← HahnSeries.order_eq_orderTop_of_ne_zero hc]
 
 private theorem orderTop_expand_mul_single_nonneg (q : ℕ+) (c : LaurentSeries K) (k : ℤ)
     (h : c ≠ 0 → 0 ≤ (q : ℤ) * c.order + k) :
-    (0 : WithTop ℤ) ≤ (expand K q c * HahnSeries.single k (1 : K)).orderTop := by
+    (0 : WithTop ℤ) ≤ (expand q c * HahnSeries.single k (1 : K)).orderTop := by
   by_cases hc : c = 0
   · simp [hc]
   · rw [orderTop_expand_mul_single q hc]
@@ -188,7 +188,7 @@ private theorem eval_map_toHahnSeries_of_coeff (n q : ℕ+) (a : ℤ)
     {p : Polynomial (LaurentSeries K)} {P : Polynomial (PowerSeries K)} {m : ℕ}
     (hm : p.natDegree = m) (hnd : P.natDegree = m)
     (hPd : ∀ i ≤ m, HahnSeries.ofPowerSeries ℤ K (P.coeff i) =
-      expand K q (p.coeff i) * HahnSeries.single (a * ((i : ℤ) - (m : ℤ))) 1)
+      expand q (p.coeff i) * HahnSeries.single (a * ((i : ℤ) - (m : ℤ))) 1)
     (y : HahnSeries ℚ K) :
     (p.map (toHahnSeries K n)).eval (HahnSeries.single ((a : ℚ) / ((n * q : ℕ+) : ℚ)) 1 * y) =
       HahnSeries.single ((a : ℚ) / ((n * q : ℕ+) : ℚ)) 1 ^ m *
@@ -234,8 +234,9 @@ private theorem newton_slope_scaling (n : ℕ+) {p : Polynomial (LaurentSeries K
     exact newton_slope_min_le hi₀m
       (fun j hj hcj ↦ hi₀min j (Finset.mem_filter.2 ⟨Finset.mem_range.2 hj, hcj⟩)) him hci
   let d : ℕ → LaurentSeries K := fun i ↦
-    expand K q (p.coeff i) * HahnSeries.single (a * ((i : ℤ) - (m : ℤ))) 1
-  have hdm : d m = 1 := by simp [d, show p.coeff m = 1 from hm ▸ hp.coeff_natDegree]
+    expand q (p.coeff i) * HahnSeries.single (a * ((i : ℤ) - (m : ℤ))) 1
+  have hdm : d m = 1 := by
+    simp [d, show p.coeff m = 1 from hm ▸ hp.coeff_natDegree, -expand_apply]
   have hdz {i} (hi : p.coeff i = 0) : d i = 0 := by simp [d, hi]
   have hdnn (i : ℕ) : (0 : WithTop ℤ) ≤ (d i).orderTop := by
     refine orderTop_expand_mul_single_nonneg q _ _ fun hci ↦ ?_
@@ -244,7 +245,7 @@ private theorem newton_slope_scaling (n : ℕ+) {p : Polynomial (LaurentSeries K
     · exact key i hlt hci
   have hd₀ : (d i₀).orderTop = ((0 : ℤ) : WithTop ℤ) := by
     rw [show d i₀ =
-        expand K q (p.coeff i₀) * HahnSeries.single (a * ((i₀ : ℤ) - (m : ℤ))) 1 from rfl,
+        expand q (p.coeff i₀) * HahnSeries.single (a * ((i₀ : ℤ) - (m : ℤ))) 1 from rfl,
       orderTop_expand_mul_single q hc₀, hqZ, ha]
     ring_nf
   obtain ⟨P, hmon, hnd, hPsub, hPi₀, hPd⟩ :=
