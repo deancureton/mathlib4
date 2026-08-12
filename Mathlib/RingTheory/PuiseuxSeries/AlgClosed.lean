@@ -169,14 +169,14 @@ private theorem exists_integral_poly_of_orderTop_nonneg {m i₀ : ℕ} (d : ℕ 
         if j ≤ m then D j else 0 := by
     simp [Polynomial.finsetSum_coeff, Polynomial.coeff_monomial, Finset.sum_ite_eq']
   set P : Polynomial (PowerSeries K) := ∑ i ∈ Finset.range (m + 1), Polynomial.monomial i (D i)
-  have hPm : P.coeff m = 1 := by rw [hPcoeff, if_pos le_rfl, hDm]
+  have hPm : P.coeff m = 1 := by rw [hPcoeff, ite_eq_left le_rfl, hDm]
   have hle : P.natDegree ≤ m := Polynomial.natDegree_le_iff_coeff_eq_zero.2 fun N hN ↦ by
-    rw [hPcoeff, if_neg (Nat.not_le_of_lt hN)]
+    rw [hPcoeff, ite_eq_right (Nat.not_le_of_lt hN)]
   refine ⟨P, Polynomial.monic_of_natDegree_le_of_coeff_eq_one m hle hPm,
     le_antisymm hle (le_natDegree_of_ne_zero (hPm ▸ one_ne_zero)), ?_, ?_,
-    fun i hi ↦ by rw [hPcoeff, if_pos hi, hD i]⟩
-  · rw [Polynomial.coeff_map, hPcoeff, if_pos (Nat.sub_le _ _), hDm1, map_zero]
-  · rw [Polynomial.coeff_map, hPcoeff, if_pos hi₀m]
+    fun i hi ↦ by rw [hPcoeff, ite_eq_left hi, hD i]⟩
+  · rw [Polynomial.coeff_map, hPcoeff, ite_eq_left (Nat.sub_le _ _), hDm1, map_zero]
+  · rw [Polynomial.coeff_map, hPcoeff, ite_eq_left hi₀m]
     have := HahnSeries.coeff_orderTop_ne hd₀
     rw [← hD i₀] at this
     convert this
