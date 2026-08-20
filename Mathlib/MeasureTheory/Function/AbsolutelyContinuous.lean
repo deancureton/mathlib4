@@ -308,6 +308,93 @@ theorem _root_.LipschitzOnWith.absolutelyContinuousOnInterval {f : ℝ → X} {K
     _ < (K + 1) * (ε / (K + 1)) := by gcongr; linarith
     _ = ε := by field
 
+private lemma uIoc_min_subset_aux (u v c : ℝ) : uIoc (min u c) (min v c) ⊆ uIoc u v := by
+  intro z hz
+  simp only [Set.mem_uIoc] at hz ⊢
+  rcases min_cases u c with ⟨e, _⟩ | ⟨e, _⟩ <;>
+    rcases min_cases v c with ⟨e', _⟩ | ⟨e', _⟩ <;>
+    rw [e, e'] at hz <;> grind
+
+private lemma uIoc_max_subset_aux (u v c : ℝ) : uIoc (max u c) (max v c) ⊆ uIoc u v := by
+  intro z hz
+  simp only [Set.mem_uIoc] at hz ⊢
+  rcases max_cases u c with ⟨e, _⟩ | ⟨e, _⟩ <;>
+    rcases max_cases v c with ⟨e', _⟩ | ⟨e', _⟩ <;>
+    rw [e, e'] at hz <;> grind
+
+private lemma dist_le_dist_min_add_dist_max_aux (f : ℝ → X) (u v c : ℝ) :
+    dist (f u) (f v) ≤ dist (f (min u c)) (f (min v c)) +
+      dist (f (max u c)) (f (max v c)) := by
+  rcases le_total u c with hu | hu <;> rcases le_total v c with hv | hv
+  · simp [min_eq_left hu, min_eq_left hv, max_eq_right hu, max_eq_right hv]
+  · simpa [min_eq_left hu, min_eq_right hv, max_eq_right hu, max_eq_left hv] using
+      dist_triangle (f u) (f c) (f v)
+  · simpa [min_eq_right hu, min_eq_left hv, max_eq_left hu, max_eq_right hv, add_comm] using
+      dist_triangle (f u) (f c) (f v)
+  · simp [min_eq_right hu, min_eq_right hv, max_eq_left hu, max_eq_left hv]
+
+private theorem trans_of_le_aux {f : ℝ → X} {a b c : ℝ}
+    (hf : AbsolutelyContinuousOnInterval f a b) (hg : AbsolutelyContinuousOnInterval f b c)
+    (hab : a ≤ b) (hbc : b ≤ c) : AbsolutelyContinuousOnInterval f a c := by
+  have hdmin : ∀ u v : ℝ, dist (min u b) (min v b) ≤ dist u v := fun u v ↦ by
+    simpa only [id_eq, NNReal.coe_one, one_mul] using
+      (LipschitzWith.id.min_const b).dist_le_mul u v
+  have hdmax : ∀ u v : ℝ, dist (max u b) (max v b) ≤ dist u v := fun u v ↦ by
+    simpa only [id_eq, NNReal.coe_one, one_mul] using
+      (LipschitzWith.id.max_const b).dist_le_mul u v
+  rw [absolutelyContinuousOnInterval_iff] at hf hg ⊢
+  intro ε hε
+  obtain ⟨δ₁, hδ₁, hfδ⟩ := hf (ε / 2) (half_pos hε)
+  obtain ⟨δ₂, hδ₂, hgδ⟩ := hg (ε / 2) (half_pos hε)
+  refine ⟨min δ₁ δ₂, lt_min hδ₁ hδ₂, ?_⟩
+  rintro ⟨m, I⟩ ⟨hmem, hdisj⟩ hlen
+  have hmem' : ∀ i ∈ Finset.range m, (I i).1 ∈ Icc a c ∧ (I i).2 ∈ Icc a c := by
+    intro i hi
+    simpa only [uIcc_of_le (hab.trans hbc)] using hmem i hi
+  calc
+    ∑ i ∈ Finset.range m, dist (f (I i).1) (f (I i).2)
+        ≤ ∑ i ∈ Finset.range m, (dist (f (min (I i).1 b)) (f (min (I i).2 b)) +
+            dist (f (max (I i).1 b)) (f (max (I i).2 b))) :=
+      Finset.sum_le_sum fun i _ ↦ dist_le_dist_min_add_dist_max_aux f _ _ b
+    _ = (∑ i ∈ Finset.range m, dist (f (min (I i).1 b)) (f (min (I i).2 b))) +
+        ∑ i ∈ Finset.range m, dist (f (max (I i).1 b)) (f (max (I i).2 b)) :=
+      Finset.sum_add_distrib
+    _ < ε / 2 + ε / 2 := add_lt_add
+      (hfδ (m, fun i ↦ (min (I i).1 b, min (I i).2 b))
+        ⟨fun i hi ↦ by
+          rw [uIcc_of_le hab]
+          exact ⟨⟨le_min (hmem' i hi).1.1 hab, min_le_right _ _⟩,
+            le_min (hmem' i hi).2.1 hab, min_le_right _ _⟩,
+          hdisj.mono fun i ↦ uIoc_min_subset_aux _ _ b⟩ <|
+        lt_of_le_of_lt (Finset.sum_le_sum fun i _ ↦ hdmin _ _)
+        (lt_of_lt_of_le hlen (min_le_left _ _)))
+      (hgδ (m, fun i ↦ (max (I i).1 b, max (I i).2 b))
+        ⟨fun i hi ↦ by
+          rw [uIcc_of_le hbc]
+          exact ⟨⟨le_max_right _ _, max_le (hmem' i hi).1.2 hbc⟩,
+            le_max_right _ _, max_le (hmem' i hi).2.2 hbc⟩,
+          hdisj.mono fun i ↦ uIoc_max_subset_aux _ _ b⟩ <|
+        lt_of_le_of_lt (Finset.sum_le_sum fun i _ ↦ hdmax _ _)
+        (lt_of_lt_of_le hlen (min_le_right _ _)))
+    _ = ε := by ring
+
+/-- If `f` is absolutely continuous on `uIcc a b` and `uIcc b c`, then it is absolutely
+continuous on `uIcc a c`. -/
+@[trans]
+theorem trans {f : ℝ → X} {a b c : ℝ} (hab : AbsolutelyContinuousOnInterval f a b)
+    (hbc : AbsolutelyContinuousOnInterval f b c) : AbsolutelyContinuousOnInterval f a c := by
+  wlog hac : a ≤ c generalizing a c
+  · exact (@this c a hbc.symm hab.symm (not_le.mp hac).le).symm
+  rcases le_total b a with hba | hab'
+  · apply hbc.mono
+    rw [uIcc_of_le hac, uIcc_of_le (hba.trans hac)]
+    exact Icc_subset_Icc hba le_rfl
+  rcases le_total c b with hcb | hbc'
+  · apply hab.mono
+    rw [uIcc_of_le hac, uIcc_of_le (hac.trans hcb)]
+    exact Icc_subset_Icc le_rfl hcb
+  exact trans_of_le_aux hab hbc hab' hbc'
+
 /-- If `f` is `C^1` on `uIcc a b`, then `f` is absolutely continuous on `uIcc a b`. -/
 theorem _root_.ContDiffOn.absolutelyContinuousOnInterval {E : Type*} [NormedAddCommGroup E]
     [NormedSpace ℝ E] {f : ℝ → E} (hf : ContDiffOn ℝ 1 f (uIcc a b)) :
