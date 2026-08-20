@@ -308,6 +308,55 @@ theorem _root_.LipschitzOnWith.absolutelyContinuousOnInterval {f : ℝ → X} {K
     _ < (K + 1) * (ε / (K + 1)) := by gcongr; linarith
     _ = ε := by field
 
+private lemma disjoint_uIoc_mul_add_aux (p q x₁ y₁ x₂ y₂ : ℝ)
+    (h : Disjoint (uIoc x₁ y₁) (uIoc x₂ y₂)) :
+    Disjoint (uIoc (p * x₁ + q) (p * y₁ + q)) (uIoc (p * x₂ + q) (p * y₂ + q)) := by
+  simp only [uIoc, Set.Ioc_disjoint_Ioc] at h ⊢
+  rcases lt_trichotomy p 0 with hp | rfl | hp
+  · have hanti : Antitone fun t : ℝ ↦ p * t + q :=
+      (antitone_mul_left hp.le).add antitone_const
+    have emin : ∀ x y : ℝ, min (p * x + q) (p * y + q) = p * max x y + q :=
+      fun x y ↦ (hanti.map_max (a := x) (b := y)).symm
+    have emax : ∀ x y : ℝ, max (p * x + q) (p * y + q) = p * min x y + q :=
+      fun x y ↦ (hanti.map_min (a := x) (b := y)).symm
+    simpa only [emin, emax] using hanti h
+  · simp
+  · have hmono : Monotone fun t : ℝ ↦ p * t + q :=
+      (monotone_mul_left_of_nonneg hp.le).add monotone_const
+    have emin : ∀ x y : ℝ, min (p * x + q) (p * y + q) = p * min x y + q :=
+      fun x y ↦ (hmono.map_min (a := x) (b := y)).symm
+    have emax : ∀ x y : ℝ, max (p * x + q) (p * y + q) = p * max x y + q :=
+      fun x y ↦ (hmono.map_max (a := x) (b := y)).symm
+    simpa only [emin, emax] using hmono h
+
+/-- If `f` is absolutely continuous on `uIcc a b` and the affine map `t ↦ p * t + q` maps
+`uIcc u v` into `uIcc a b`, then `t ↦ f (p * t + q)` is absolutely continuous on `uIcc u v`. -/
+theorem comp_mul_add {f : ℝ → X} {a b u v p q : ℝ}
+    (hf : AbsolutelyContinuousOnInterval f a b)
+    (hmaps : MapsTo (fun t ↦ p * t + q) (uIcc u v) (uIcc a b)) :
+    AbsolutelyContinuousOnInterval (fun t ↦ f (p * t + q)) u v := by
+  rw [absolutelyContinuousOnInterval_iff] at hf ⊢
+  intro ε hε
+  obtain ⟨δ, hδ, hfδ⟩ := hf ε hε
+  refine ⟨δ / (|p| + 1), by positivity, ?_⟩
+  rintro ⟨n, I⟩ ⟨hmem, hdisj⟩ hlen
+  refine hfδ (n, fun i ↦ (p * (I i).1 + q, p * (I i).2 + q)) ⟨?_, ?_⟩ ?_
+  · exact fun i hi ↦ ⟨hmaps (hmem i hi).1, hmaps (hmem i hi).2⟩
+  · exact fun i hi j hj hij ↦ disjoint_uIoc_mul_add_aux p q _ _ _ _ (hdisj hi hj hij)
+  · have hdist : ∀ x y : ℝ, dist (p * x + q) (p * y + q) = |p| * dist x y := by
+      intro x y
+      simp only [Real.dist_eq]
+      rw [show p * x + q - (p * y + q) = p * (x - y) by ring, abs_mul]
+    simp only [hdist]
+    rw [← Finset.mul_sum]
+    calc
+      |p| * ∑ i ∈ Finset.range n, dist (I i).1 (I i).2
+          ≤ (|p| + 1) * ∑ i ∈ Finset.range n, dist (I i).1 (I i).2 := by
+            rw [add_mul, one_mul]
+            exact le_add_of_nonneg_right <| Finset.sum_nonneg fun _ _ ↦ dist_nonneg
+      _ < (|p| + 1) * (δ / (|p| + 1)) := mul_lt_mul_of_pos_left hlen (by positivity)
+      _ = δ := by field_simp
+
 /-- If `f` is `C^1` on `uIcc a b`, then `f` is absolutely continuous on `uIcc a b`. -/
 theorem _root_.ContDiffOn.absolutelyContinuousOnInterval {E : Type*} [NormedAddCommGroup E]
     [NormedSpace ℝ E] {f : ℝ → E} (hf : ContDiffOn ℝ 1 f (uIcc a b)) :
