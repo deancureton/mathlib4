@@ -401,8 +401,10 @@ theorem boundedVariationOn (hf : AbsolutelyContinuousOnInterval f a b) :
     · norm_cast
     · simp only [Nat.cast_add, Nat.cast_one, δ']; field
 
-/-- If `f` is absolute continuous on `uIcc a b`, then `f'` exists a.e. on `uIcc a b`. -/
-theorem ae_differentiableAt {f : ℝ → ℝ} {a b : ℝ}
+/-- If a finite-dimensional vector-valued function `f` is absolutely continuous on `uIcc a b`,
+then it is differentiable almost everywhere there. -/
+theorem ae_differentiableAt {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+    [FiniteDimensional ℝ E] {f : ℝ → E} {a b : ℝ}
     (hf : AbsolutelyContinuousOnInterval f a b) :
     ∀ᵐ (x : ℝ), x ∈ uIcc a b → DifferentiableAt ℝ f x :=
   hf.boundedVariationOn.ae_differentiableAt_of_mem_uIcc

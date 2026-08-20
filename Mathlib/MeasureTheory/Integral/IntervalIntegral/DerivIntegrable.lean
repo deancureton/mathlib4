@@ -8,6 +8,7 @@ module
 public import Mathlib.MeasureTheory.Function.AbsolutelyContinuous
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.Slope
 import Mathlib.Algebra.Order.Interval.Set.Group
+import Mathlib.MeasureTheory.SpecificCodomains.Pi
 
 /-!
 # `f'` is interval integrable for certain classes of functions `f`
@@ -17,10 +18,10 @@ This file proves that:
   integrable on `a..b`.
 * `MonotoneOn.intervalIntegral_deriv_mem_uIcc`: If `f` is monotone on `a..b`, then the integral of
   `f'` on `a..b` is in `uIcc 0 (f b - f a)`.
-* `BoundedVariationOn.intervalIntegrable_deriv`: If `f` has bounded variation on `a..b`,
-  then `f'` is interval integrable on `a..b`.
-* `AbsolutelyContinuousOnInterval.intervalIntegrable_deriv`: If `f` is absolutely continuous on
-  `a..b`, then `f'` is interval integrable on `a..b`.
+* `BoundedVariationOn.intervalIntegrable_deriv`: If a finite-dimensional vector-valued function
+  `f` has bounded variation on `a..b`, then `f'` is interval integrable on `a..b`.
+* `AbsolutelyContinuousOnInterval.intervalIntegrable_deriv`: If a finite-dimensional vector-valued
+  function `f` is absolutely continuous on `a..b`, then `f'` is interval integrable on `a..b`.
 
 ## Tags
 interval integrable, monotone, bounded variation, absolutely continuous
@@ -139,25 +140,49 @@ theorem MonotoneOn.intervalIntegral_deriv_mem_uIcc {f : ℝ → ℝ} {a b : ℝ}
     intro x hx
     exact Eq.symm <| abs_eq_self.mpr <| f_deriv_nonneg hx
 
-/-- If `f` has bounded variation on `uIcc a b`, then `f'` is interval integrable on `a..b`. -/
-theorem BoundedVariationOn.intervalIntegrable_deriv {f : ℝ → ℝ} {a b : ℝ}
+private theorem BoundedVariationOn.intervalIntegrable_deriv_real_aux {f : ℝ → ℝ} {a b : ℝ}
     (hf : BoundedVariationOn f (uIcc a b)) :
     IntervalIntegrable (deriv f) volume a b := by
   obtain ⟨p, q, hp, hq, rfl⟩ := hf.locallyBoundedVariationOn.exists_monotoneOn_sub_monotoneOn
-  have h₂ : ∀ᵐ x, x ≠ max a b := by simp [ae_iff, measure_singleton]
+  have hae_ne : ∀ᵐ x, x ≠ max a b := by simp [ae_iff, measure_singleton]
   apply (hp.intervalIntegrable_deriv.sub hq.intervalIntegrable_deriv).congr_ae
   rw [Filter.EventuallyEq, MeasureTheory.ae_restrict_iff' (by simp [uIoc])]
-  filter_upwards [hp.ae_differentiableWithinAt_of_mem, hq.ae_differentiableWithinAt_of_mem, h₂]
-    with x hx₁ hx₂ hx₃ hx₄
-  have hx₅ : x ∈ uIcc a b := Ioc_subset_Icc_self hx₄
-  rw [uIoc, mem_Ioc] at hx₄
-  have hx₆ : uIcc a b ∈ 𝓝 x := Icc_mem_nhds hx₄.left (lt_of_le_of_ne hx₄.right hx₃)
-  replace hx₁ := (hx₁ hx₅).differentiableAt hx₆ |>.hasDerivAt
-  replace hx₂ := (hx₂ hx₅).differentiableAt hx₆ |>.hasDerivAt
-  exact (hx₁.sub hx₂).deriv.symm
+  filter_upwards [hp.ae_differentiableWithinAt_of_mem, hq.ae_differentiableWithinAt_of_mem, hae_ne]
+    with x hp_diff hq_diff hx_ne hx_mem
+  have hx_mem_uIcc : x ∈ uIcc a b := Ioc_subset_Icc_self hx_mem
+  rw [uIoc, mem_Ioc] at hx_mem
+  have hnhds : uIcc a b ∈ 𝓝 x :=
+    Icc_mem_nhds hx_mem.left (lt_of_le_of_ne hx_mem.right hx_ne)
+  exact (((hp_diff hx_mem_uIcc).differentiableAt hnhds).hasDerivAt.sub
+    ((hq_diff hx_mem_uIcc).differentiableAt hnhds).hasDerivAt).deriv.symm
 
-/-- If `f` is absolutely continuous on `uIcc a b`, then `f'` is interval integrable on `a..b`. -/
-theorem AbsolutelyContinuousOnInterval.intervalIntegrable_deriv {f : ℝ → ℝ} {a b : ℝ}
-    (hf : AbsolutelyContinuousOnInterval f a b) :
+/-- If a finite-dimensional vector-valued function `f` has bounded variation on `uIcc a b`, then
+`f'` is interval integrable on `a..b`. -/
+theorem BoundedVariationOn.intervalIntegrable_deriv
+    {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
+    {f : ℝ → E} {a b : ℝ} (hf : BoundedVariationOn f (uIcc a b)) :
+    IntervalIntegrable (deriv f) volume a b := by
+  let e := (Module.Basis.ofVectorSpace ℝ E).equivFun.toContinuousLinearEquiv
+  rw [intervalIntegrable_iff]
+  change Integrable (deriv f) (volume.restrict (uIoc a b))
+  rw [← e.integrable_comp_iff, integrable_pi_iff]
+  intro i
+  change IntegrableOn (fun x ↦ e (deriv f x) i) (uIoc a b) volume
+  rw [← intervalIntegrable_iff]
+  let L : E →L[ℝ] ℝ :=
+    (ContinuousLinearMap.proj (R := ℝ) i).comp e.toContinuousLinearMap
+  have hint : IntervalIntegrable (deriv (L ∘ f)) volume a b :=
+    (L.lipschitzWith.comp_boundedVariationOn hf).intervalIntegrable_deriv_real_aux
+  apply hint.congr_ae
+  rw [Filter.EventuallyEq, MeasureTheory.ae_restrict_iff' measurableSet_uIoc]
+  filter_upwards [hf.ae_differentiableAt_of_mem_uIcc] with x hx hxab
+  simpa [L] using
+    (L.hasFDerivAt.comp_hasDerivAt x (hx (Ioc_subset_Icc_self hxab)).hasDerivAt).deriv
+
+/-- If a finite-dimensional vector-valued function `f` is absolutely continuous on `uIcc a b`,
+then `f'` is interval integrable on `a..b`. -/
+theorem AbsolutelyContinuousOnInterval.intervalIntegrable_deriv
+    {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
+    {f : ℝ → E} {a b : ℝ} (hf : AbsolutelyContinuousOnInterval f a b) :
     IntervalIntegrable (deriv f) volume a b :=
   hf.boundedVariationOn.intervalIntegrable_deriv
