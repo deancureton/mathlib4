@@ -16,6 +16,8 @@ This file proves that:
 * `AbsolutelyContinuousOnInterval.integral_deriv_eq_sub`: If `f` is absolutely continuous on
   `uIcc a b`, then *Fundamental Theorem of Calculus* holds for `f'` on `a..b`, i.e.
   `∫ (x : ℝ) in a..b, deriv f x = f b - f a`.
+* `AbsolutelyContinuousOnInterval.integral_eq_sub_of_ae_hasDerivAt`: The Banach-valued version,
+  assuming an almost-everywhere derivative and its interval integrability.
 * `AbsolutelyContinuousOnInterval.integral_mul_deriv_eq_deriv_mul`:
   *Integration by Parts* holds for absolutely continuous functions, i.e. if `f` and `g` are
   absolutely continuous on `uIcc a b`, then
@@ -240,6 +242,24 @@ theorem AbsolutelyContinuousOnInterval.integral_deriv_eq_sub {f : ℝ → ℝ} {
   have := hC a (by simp)
   have := hC b (by simp)
   grind
+
+/-- If a Banach-valued function `f` is absolutely continuous on `uIcc a b`, has derivative `f'`
+almost everywhere on `uIoo a b`, and `f'` is interval integrable, then
+`∫ x in a..b, f' x = f b - f a`. -/
+theorem AbsolutelyContinuousOnInterval.integral_eq_sub_of_ae_hasDerivAt [CompleteSpace F]
+    {f f' : ℝ → F} {a b : ℝ} (hf : AbsolutelyContinuousOnInterval f a b)
+    (hderiv : ∀ᵐ x, x ∈ uIoo a b → HasDerivAt f (f' x) x)
+    (hint : IntervalIntegrable f' volume a b) :
+    ∫ x in a..b, f' x = f b - f a := by
+  refine (SeparatingDual.eq_iff_forall_dual_eq (R := ℝ)).2 fun φ ↦ ?_
+  have hφ : ∫ x in a..b, deriv (fun x ↦ φ (f x)) x = φ (f b) - φ (f a) :=
+    (φ.lipschitzWith.comp_absolutelyContinuousOnInterval hf).integral_deriv_eq_sub
+  have hcongr : ∀ᵐ x : ℝ, x ∈ uIoc a b → φ (f' x) = deriv (fun x ↦ φ (f x)) x := by
+    filter_upwards [hderiv, volume.ae_ne (max a b)] with x hx hx_ne_max hxmem
+    have hxmem_uIoo : x ∈ uIoo a b := ⟨hxmem.1, lt_of_le_of_ne hxmem.2 hx_ne_max⟩
+    exact ((φ.hasFDerivAt.comp_hasDerivAt x (hx hxmem_uIoo)).deriv).symm
+  rw [← φ.intervalIntegral_comp_comm hint, φ.map_sub, ← hφ]
+  exact intervalIntegral.integral_congr_ae hcongr
 
 /-- The integral of the derivative of a product of two absolutely continuous functions. -/
 theorem AbsolutelyContinuousOnInterval.integral_deriv_mul_eq_sub
