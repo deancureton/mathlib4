@@ -217,6 +217,8 @@ theorem const_mul {f : ℝ → ℝ} (α : ℝ) (hf : AbsolutelyContinuousOnInter
     AbsolutelyContinuousOnInterval (fun x ↦ α * f x) a b :=
   hf.const_smul α
 
+variable {f : ℝ → X}
+
 lemma uniformity_eq_comap_totalLengthFilter :
     uniformity X = comap (fun x ↦ (1, fun _ ↦ x)) totalLengthFilter := by
   refine Filter.HasBasis.eq_of_same_basis Metric.uniformity_basis_dist ?_
@@ -245,6 +247,8 @@ theorem uniformContinuousOn (hf : AbsolutelyContinuousOnInterval f a b) :
 theorem continuousOn (hf : AbsolutelyContinuousOnInterval f a b) :
     ContinuousOn f (uIcc a b) :=
   hf.uniformContinuousOn.continuousOn
+
+variable {f g : ℝ → F}
 
 /-- If `f` is absolutely continuous on `uIcc a b`, then `f` is bounded on `uIcc a b`. -/
 theorem exists_bound (hf : AbsolutelyContinuousOnInterval f a b) :
