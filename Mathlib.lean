@@ -5748,6 +5748,7 @@ public import Mathlib.MeasureTheory.VectorMeasure.Decomposition.RadonNikodym
 public import Mathlib.MeasureTheory.VectorMeasure.Integral
 public import Mathlib.MeasureTheory.VectorMeasure.IntegrationByParts
 public import Mathlib.MeasureTheory.VectorMeasure.Prod
+public import Mathlib.MeasureTheory.VectorMeasure.RadonNikodymProperty
 public import Mathlib.MeasureTheory.VectorMeasure.SetIntegral
 public import Mathlib.MeasureTheory.VectorMeasure.Variation.Basic
 public import Mathlib.MeasureTheory.VectorMeasure.Variation.Defs
